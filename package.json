@@ -2,13 +2,13 @@
   "name": "quick_poll",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "GrapeColor <grapecolor@live.jp>",
-  "license": "ISC",
+  "author": "GrapeColor",
+  "license": "MIT",
   "dependencies": {
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0"
