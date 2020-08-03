@@ -1,4 +1,7 @@
+'use strict';
+
 const Discord = require('discord.js');
+const Response = require('./response');
 
 class QuickPoll {
   constructor(shards = 0, shardCount = 1) {
@@ -8,13 +11,11 @@ class QuickPoll {
     const client = this.client = new Discord.Client({
       shards: shards,
       shardCount: shardCount,
-      ws: {
-        intents: ['GUILDS', 'GUILD_EMOJIS', 'GUILD_WEBHOOKS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES']
-      }
+      ws: { intents: Discord.Intents.NON_PRIVILEGED }
     });
 
     this.readyCount = 0;
-    client.on('ready', () => {
+    client.on('shardReady', () => {
       client.user.setPresence({
         activity: { name: `再接続されました(${++this.readyCount})` },
         status: 'dnd',
@@ -25,6 +26,8 @@ class QuickPoll {
     });
 
     this.updateStatusCount = 0;
+
+    Response.events(client);
   }
 
   login(token) {
