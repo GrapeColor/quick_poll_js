@@ -1,17 +1,23 @@
 'use strict';
 
-const Discord = require('discord.js');
-const Response = require('./response');
+const { Client, Intents } = require('discord.js');
+const Command = require('./command');
+const Admin = require('./admin');
 
 class QuickPoll {
   constructor(shards = 0, shardCount = 1) {
     this.shards = shards;
     this.shardCount = shardCount;
 
-    const bot = this.bot = new Discord.Client({
+    const bot = this.bot = new Client({
       shards: shards,
       shardCount: shardCount,
-      ws: { intents: Discord.Intents.NON_PRIVILEGED }
+      ws: { intents: Intents.NON_PRIVILEGED }
+    });
+
+    bot.once('ready', () => {
+      Command.events(bot);
+      Admin.events(bot);
     });
 
     this.readyCount = 0;
@@ -26,9 +32,7 @@ class QuickPoll {
     });
 
     this.updateStatusCount = 0;
-    bot.setInterval(() => { this.updateStatus(this.updateStatusCount++) }, 30000)
-
-    Response.events(bot);
+    bot.setInterval(() => { this.updateStatus(this.updateStatusCount++) }, 30000);
   }
 
   login(token) {
@@ -38,7 +42,6 @@ class QuickPoll {
 
   updateStatus(count) {
     const bot = this.bot;
-    console.log(count);
 
     switch(count % 4) {
       case 0:
