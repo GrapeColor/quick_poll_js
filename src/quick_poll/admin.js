@@ -1,8 +1,10 @@
 'use strict';
 
 class Admin {
+  static SPLIT_REGEX = /.*\n?/g;
+
   static events(bot) {
-    const adminIds = process.env.ADMIN_USER_ID.split(',');
+    const adminIds = process.env.ADMIN_USER_IDS.split(',');
     const evalRegex = new RegExp(`^<@!?${bot.user.id}> admin\\n\`\`\`\\n(.+)\\n\`\`\``, 's');
 
     bot.on('message', message => {
@@ -30,19 +32,16 @@ class Admin {
   }
 
   static split(content, limit) {
-    let contents = [];
+    const contents = [];
     let part = '```';
 
-    content.split('\n').forEach(line => {
-      line += '\n';
-
-      if (part.length + line.length > limit - 3) {
+    for (const match of content.matchAll(this.SPLIT_REGEX)) {
+      if (part.length + match[0].length > limit - 3) {
         contents.push(`${part}\`\`\``);
         part = '```';
       }
-
-      part += line;
-    });
+      part += match[0];
+    }
 
     contents.push(`${part}\`\`\``);
 
