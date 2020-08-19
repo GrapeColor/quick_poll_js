@@ -22,8 +22,8 @@ class Admin {
     const bot = channel.client;
     let result = '';
 
-    try { result = JSON.stringify(eval(code), null, 2); }
-    catch (error) { result = error.toString(); }
+    try { result = String(JSON.stringify(eval(code), null, 2)); }
+    catch (error) { result = String(error); }
 
     this.split(result, 2000).forEach(content => {
       channel.send(content)
