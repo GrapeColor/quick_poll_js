@@ -12,13 +12,12 @@ class QuickPoll {
     const bot = this.bot = new Client({
       shards: shards,
       shardCount: shardCount,
-      ws: { intents: Intents.NON_PRIVILEGED }
+      ws: { intents: Intents.NON_PRIVILEGED },
+      partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION']
     });
 
-    bot.once('ready', () => {
-      Command.events(bot);
-      Admin.events(bot);
-    });
+    Command.events(bot);
+    bot.once('ready', () => Admin.events(bot));
 
     this.readyCount = 0;
     bot.on('shardReady', () => {
@@ -32,7 +31,7 @@ class QuickPoll {
     });
 
     this.updateStatusCount = 0;
-    bot.setInterval(() => { this.updateStatus(this.updateStatusCount++) }, 30000);
+    bot.setInterval(() => this.updateStatus(this.updateStatusCount++), 30000);
   }
 
   login(token) {
