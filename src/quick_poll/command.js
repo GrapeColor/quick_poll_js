@@ -20,7 +20,10 @@ class Command {
 
     bot.on('message', message => {
       const commandData = this.parse(message);
-      if (!commandData) return;
+      if (!commandData) {
+        message.channel.messages.cache.delete(message.id);
+        return;
+      }
 
       this.waitQueues[message.id] = new this(commandData);
     });
@@ -103,8 +106,9 @@ class Command {
   constructor(commandData) {
     const result = command[commandData.name](commandData);
 
-    result.react('↩️');
-    setTimeout(() => this.timeout, Constants.QUEUE_TIMEOUT);
+    result.react('↩️')
+      .then(setTimeout(() => this.timeout, Constants.QUEUE_TIMEOUT))
+      .catch();
   };
 }
 

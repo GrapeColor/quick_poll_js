@@ -8,16 +8,17 @@ const excludeReaction = async (reaction, user) => {
   const channel = reaction.message.channel;
   if (user.equals(botUser) || !channel || channel.type === 'dm') return;
 
-  const partial = reaction.partial;
-  const emoji = reaction.emoji;
   const message = await reaction.message.fetch();
-  const reactions = message.reactions;
 
   const pollEmbed = message.embeds[0];
   if (!pollEmbed || !message.author.equals(botUser)) return;
 
   const pollColor = pollEmbed.color;
   if (pollColor !== Constants.COLOR_POLL && pollColor !== Constants.COLOR_EXPOLL) return;
+
+  const partial = reaction.partial;
+  const emoji = reaction.emoji;
+  const reactions = message.reactions;
 
   if (partial) {
     reactions.add(reaction);
@@ -44,7 +45,6 @@ const excludeReaction = async (reaction, user) => {
 
 Command.add('poll', bot => {
   bot.on('messageReactionAdd', (reaction, user) => excludeReaction(reaction, user));
-  bot.on('messageReactionRemove', (reaction, user) => {});
 }, commandData => {
 
 });
