@@ -22,7 +22,7 @@ class Command {
       const commandData = this.parse(message);
       if (!commandData) return;
 
-      this.waitQueues[message.id] = new this(commandData); 
+      this.waitQueues[message.id] = new this(commandData);
     });
 
     for (const events of this.commandEvents) events(bot);
@@ -109,3 +109,5 @@ class Command {
 }
 
 module.exports = Command;
+
+require('./poll');
