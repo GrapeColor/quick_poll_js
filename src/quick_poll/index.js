@@ -13,11 +13,9 @@ class QuickPoll {
       shards: shards,
       shardCount: shardCount,
       ws: { intents: Intents.NON_PRIVILEGED },
-      partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION']
+      partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'],
+      restTimeOffset: 200
     });
-
-    Command.events(bot);
-    bot.once('ready', () => Admin.events(bot));
 
     this.readyCount = 0;
     bot.on('shardReady', () => {
@@ -35,7 +33,13 @@ class QuickPoll {
   }
 
   login(token) {
-    this.bot.login(token)
+    const bot = this.bot;
+
+    bot.login(token)
+      .then(() => {
+        Admin.events(bot);
+        Command.events(bot);
+      })
       .catch(console.error);
   }
 

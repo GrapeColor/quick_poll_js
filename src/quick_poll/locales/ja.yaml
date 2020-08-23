@@ -1,0 +1,74 @@
+ja:
+  help:
+    wait: "ヘルプ表示生成中..."
+    title: "📊 Quick Pollの使い方"
+    url: "https://grapecolor.github.io/quick_poll/"
+    description: |
+      アンケートを作成し、投票を募ることができるBOTです。
+      各コマンドの詳しい利用方法は**[こちら](${HELP_URL})**をご覧ください。
+    fields:
+      - name: "🇦 🇧 🇨 🇩 …で選択できる投票を作る"
+        value: "```${PREFIX}poll 好きな果物は？ りんご ぶどう みかん キウイ```"
+      - name: "任意の絵文字で選択できる投票を作る"
+        value: "```${PREFIX}poll 好きな果物は？ 🍎 りんご 🍇 ぶどう 🍊 みかん 🥝 キウイ```"
+      - name: "⭕ ❌ の二択で選択できる投票を作る"
+        value: "```${PREFIX}poll メロンは果物である```"
+      - name: "ひとり一票だけの投票を作る"
+        value: '```ex${PREFIX}poll "Party Parrotは何て動物？" インコ フクロウ カカポ オウム```'
+      - name: "🌟 ヒント"
+        value: |
+          ● 投票の選択肢は最大20個まで
+          ● 文・絵文字の区切りは半角スペースか改行
+          ● 半角スペースを含めたい場合 "" で文を囲む
+          ● 画像を添付すると画像付きの投票を作成
+      - name: "↩️ でコマンド実行をキャンセル(60秒以内)"
+        value: |
+          💟 [BOT開発・運用資金の寄付](${DONATION_URL})
+          ⚠️ [ご質問・不具合報告・更新情報](${SUPPORT_URL})
+          ➡️ **[サーバーへ追加](${INVITE_URL})**
+  poll:
+    wait: "投票生成中..."
+    footer:
+      poll: "選択肢にリアクションで投票できます"
+      freepoll: "任意のリアクションで投票できます"
+      ex:
+        poll: "選択肢にリアクションで1人1票だけ投票できます"
+        freepoll: "任意のリアクションで1人1票だけ投票できます"
+    error:
+      unavailableExclusive:
+        titile: "DM・グループDM内では 'ex${PREFIX}' プレフィックスが利用できません"
+      cannotExclusive:
+        title: "'ex${PREFIX}' プレフィックスが利用できません"
+        description: "`ex${PREFIX}` プレフィックスコマンドの実行にはBOTに **メッセージの管理** 権限が必要です"
+      tooLongCommand:
+        title: "コマンドが長すぎます"
+        description: "コマンドの長さは最大1200文字までです"
+      tooFewArguments:
+        title: "選択肢の数が指定されていません"
+      tooFewOptions:
+        title: "選択肢が1個を下回っています"
+      tooManyOptions:
+        title: "選択肢が${MAX_OPTIONS}個を超えています"
+      tooManyNumber:
+        title: "選択肢が${MAX_OPTIONS}個を超えています"
+      duplicateEmojis:
+        title: "絵文字が重複しています"
+      tooLongQuery:
+        title: "質問文が${QUERY_MAX}文字を超えています"
+      unavailableExternalEmoji:
+        title: "外部の絵文字が利用できません"
+        description: "投票に外部の絵文字を使用したい場合、このBOTに **外部の絵文字の使用** 権限が必要です"
+      failed:
+        title: "投票を作成できません"
+        description: "投票を作成するには、このBOTに **メッセージ履歴を読む** と **リアクションの追加** 権限が必要です"
+  export:
+    wait: "投票結果CSVファイル出力中..."
+    error:
+      cannotSend:
+        title: "CSVファイルが送信できません"
+        description: "このBOTに **ファイルを添付** 権限が必要です"
+  error:
+    exception:
+      title: "予期しない原因でコマンドの実行に失敗しました"
+      description: "開発チームにエラー情報を送信しました"
+      infomation: "[ご質問・不具合報告](${SUPPORT_URL})"
