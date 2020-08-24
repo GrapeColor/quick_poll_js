@@ -1,7 +1,7 @@
 'use strict';
 
 const Command = require('./command');
-const Constants = require('./constants');
+const constants = require('./constants');
 
 const excludeReaction = async (reaction, user) => {
   const botUser = user.client.user;
@@ -14,7 +14,7 @@ const excludeReaction = async (reaction, user) => {
   if (!pollEmbed || !message.author.equals(botUser)) return;
 
   const pollColor = pollEmbed.color;
-  if (pollColor !== Constants.COLOR_POLL && pollColor !== Constants.COLOR_EXPOLL) return;
+  if (pollColor !== constants.COLOR_POLL && pollColor !== constants.COLOR_EXPOLL) return;
 
   const partial = reaction.partial;
   const emoji = reaction.emoji;
@@ -33,7 +33,7 @@ const excludeReaction = async (reaction, user) => {
     return;
   }
 
-  if (pollColor !== Constants.COLOR_EXPOLL) return;
+  if (pollColor !== constants.COLOR_EXPOLL) return;
 
   for (const reaction of myReactions.array()) {
     if (!partial && !reaction.users.cache.has(user.id) || reaction.emoji.name === emoji.name) continue;

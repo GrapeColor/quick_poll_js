@@ -1,6 +1,6 @@
 'use strict';
 
-const Constants = require('./constants');
+const constants = require('./constants');
 
 class Command {
   static commands = {};
@@ -107,7 +107,7 @@ class Command {
     const result = command[commandData.name](commandData);
 
     result.react('↩️')
-      .then(setTimeout(() => this.timeout, Constants.QUEUE_TIMEOUT))
+      .then(setTimeout(() => this.timeout, constants.QUEUE_TIMEOUT))
       .catch();
   };
 }
