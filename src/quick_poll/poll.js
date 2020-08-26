@@ -1,6 +1,5 @@
 'use strict';
 
-const Command = require('./command');
 const constants = require('./constants');
 
 const excludeReaction = async (reaction, user) => {
@@ -43,8 +42,16 @@ const excludeReaction = async (reaction, user) => {
   }
 }
 
-Command.add('poll', bot => {
-  bot.on('messageReactionAdd', (reaction, user) => excludeReaction(reaction, user));
-}, commandData => {
+const createPoll = commandData => {
+  
+}
 
-});
+exports.events = bot => {
+  bot.on('messageReactionAdd', (reaction, user) => excludeReaction(reaction, user));
+};
+
+exports.commands = {
+  poll: commandData => createPoll(commandData),
+  numpoll: commandData => createPoll(commandData),
+  freepoll: commandData => createPoll(commandData)
+}
