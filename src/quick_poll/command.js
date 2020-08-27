@@ -10,7 +10,7 @@ class Command {
     ...poll.commands
   };
   static commandEvents = [
-    ...poll.events
+    poll.events
   ];
 
   static guildPrefixes = {};
@@ -34,27 +34,30 @@ class Command {
         return;
       }
 
-      this.waitQueues[message.id] = new this(commandData);
+      try {
+        this.waitQueues[message.id] = new this(commandData);
+      } catch {}
     });
 
     for (const events of this.commandEvents) events(bot);
   }
 
   static CUSTOM_PREFIX_REGEX = /\[([!-~]{1,4}?)\]/;
-  static DEFAULT_PREFIX = '/';
   static LOCALE_REGEX = /<(\w{2})>/;
-  static DEFAULT_LOCALE = 'ja';
 
   static updateNick(guild) {
     const matchPrefix = guild.me.nickname?.match(this.CUSTOM_PREFIX_REGEX);
     const matchLocale = guild.me.nickname?.match(this.LOCALE_REGEX);
 
-    this.guildPrefixes[guild.id] = matchPrefix ? matchPrefix[1] : this.DEFAULT_PREFIX;
-    this.guildLocales[guild.id] = matchLocale && locales[matchLocale[1]] ? matchLocale[1] : this.DEFAULT_LOCALE;
+    if (matchPrefix) this.guildPrefixes[guild.id] = matchPrefix[1];
+    if (matchLocale && locales[matchLocale[1]]) this.guildLocales[guild.id] = matchLocale[1];
   }
 
+  static DEFAULT_PREFIX = '/';
+  static DEFAULT_LOCALE = 'ja';
+
   static parse(message) {
-    const prefix = this.guildPrefixes[message.guild.id];
+    const prefix = this.guildPrefixes[message.guild?.id] ?? this.DEFAULT_PREFIX;
     const content = message.content;
 
     const escapedPrefix = prefix.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -65,7 +68,7 @@ class Command {
     const exclusive = !!match[1];
     const argsString = content.slice(match[0].length);
     const args = this.parseString(argsString);
-    if (!Object.keys(this.commands).includes(args[0])) return;
+    if (!this.commands[args[0]]) return;
 
     return {
       prefix: prefix,
