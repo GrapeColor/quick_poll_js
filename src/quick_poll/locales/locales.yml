@@ -36,10 +36,10 @@ ja:
         freepoll: "任意のリアクションで1人1票だけ投票できます"
     error:
       unavailableExclusive:
-        titile: "DM・グループDM内では 'ex${PREFIX}' プレフィックスが利用できません"
+        titile: "DM・グループDM内ではexオプションが利用できません"
       cannotExclusive:
-        title: "'ex${PREFIX}' プレフィックスが利用できません"
-        description: "`ex${PREFIX}` プレフィックスコマンドの実行にはBOTに **メッセージの管理** 権限が必要です"
+        title: "'exオプションが利用できません"
+        description: "exオプションの利用にはBOTに **メッセージの管理** 権限が必要です"
       tooLongCommand:
         title: "コマンドが長すぎます"
         description: "コマンドの長さは最大1200文字までです"
