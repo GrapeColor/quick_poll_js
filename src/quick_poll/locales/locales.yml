@@ -45,7 +45,7 @@ ja:
 
   errors:
     infomation: "[ご質問・不具合報告](${SUPPORT_URL})"
-    exception:
+    unexpect:
       title: "予期しない原因でコマンドの実行に失敗しました"
       description: "開発チームにエラー情報を送信しました"
     poll:
