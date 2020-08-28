@@ -4,7 +4,7 @@ const { Client, Intents } = require('discord.js');
 const Command = require('./command');
 const Admin = require('./admin');
 
-class QuickPoll {
+module.exports = class QuickPoll {
   constructor(shards = 0, shardCount = 1) {
     this.shards = shards;
     this.shardCount = shardCount;
@@ -73,5 +73,3 @@ class QuickPoll {
     }
   }
 }
-
-module.exports = QuickPoll;

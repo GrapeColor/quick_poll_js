@@ -1,6 +1,6 @@
 'use strict';
 
-class Admin {
+module.exports = class Admin {
   static SPLIT_REGEX = /.*\n?/g;
 
   static events(bot) {
@@ -48,5 +48,3 @@ class Admin {
     return contents;
   }
 }
-
-module.exports = Admin;

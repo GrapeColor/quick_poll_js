@@ -2,9 +2,10 @@
 
 const { locales } = require('./locales');
 
-class PollError {
+module.exports = class PollError {
   constructor(exception, lang = 'ja', variables = {}) {
-    const error = locales[lang].errors.poll[exception];
+    const errors = locales[lang].errors;
+    const error = errors.poll[exception] ?? errors.unexpect;
     const infomation = locales[lang].errors.infomation;
 
     let title = error.title;
@@ -21,5 +22,3 @@ class PollError {
 
   replacer(variables, key) { return `${variables[key] ?? '' }`; }
 }
-
-module.exports = PollError;
