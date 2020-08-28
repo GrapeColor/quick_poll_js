@@ -3,20 +3,11 @@
 const constants = require('./constants');
 const locales = require('./locales');
 
-const poll = require('./poll');
+const PollError = require('./error');
 
-class Command {
-  static commands = {
-    ...poll.commands
-  };
-  static commandEvents = [
-    poll.events
-  ];
-
+module.exports = class Command {
   static guildPrefixes = {};
   static guildLocales = {};
-
-  static waitQueues = {};
 
   static events(bot) {
     bot.once('ready', () => {
@@ -36,7 +27,9 @@ class Command {
 
       try {
         this.waitQueues[message.id] = new this(commandData);
-      } catch {}
+      } catch(error) {
+        this.sendError
+      }
     });
 
     for (const events of this.commandEvents) events(bot);
@@ -112,6 +105,13 @@ class Command {
     return args;
   }
 
+  static commandEvents = [];
+  static commands = {};
+
+  static sendError() {}
+
+  static waitQueues = {};
+
   constructor(commandData) {
     const result = command[commandData.name](commandData);
 
@@ -120,5 +120,3 @@ class Command {
       .catch();
   };
 }
-
-module.exports = Command;

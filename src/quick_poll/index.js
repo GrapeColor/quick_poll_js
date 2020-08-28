@@ -34,14 +34,14 @@ module.exports = class QuickPoll {
   }
 
   login(token) {
-    const bot = this.bot;
-
-    bot.login(token)
-      .then(() => {
-        Admin.events(bot);
-        Command.events(bot);
-      })
+    this.bot.login(token)
+      .then(() => this.entryEvents())
       .catch(console.error);
+  }
+
+  entryEvents() {
+    Admin.events(this.bot);
+    Command.events(this.bot);
   }
 
   updateStatus(count) {
@@ -73,3 +73,13 @@ module.exports = class QuickPoll {
     }
   }
 }
+
+const poll = require('./poll');
+
+Command.commandEvents = [
+  poll.events
+];
+
+Command.commands = {
+  ...poll.commands
+};
