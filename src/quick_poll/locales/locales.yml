@@ -26,6 +26,7 @@ ja:
           💟 [BOT開発・運用資金の寄付](${DONATION_URL})
           ⚠️ [ご質問・不具合報告・更新情報](${SUPPORT_URL})
           ➡️ **[サーバーへ追加](${INVITE_URL})**
+
   poll:
     wait: "投票生成中..."
     footer:
@@ -34,15 +35,25 @@ ja:
       ex:
         poll: "選択肢にリアクションで1人1票だけ投票できます"
         freepoll: "任意のリアクションで1人1票だけ投票できます"
+
+  export:
+    wait: "投票結果CSVファイル出力中..."
     error:
+      cannotSend:
+        title: "CSVファイルが送信できません"
+        description: "このBOTに **ファイルを添付** 権限が必要です"
+
+  errors:
+    infomation: "[ご質問・不具合報告](${SUPPORT_URL})"
+    exception:
+      title: "予期しない原因でコマンドの実行に失敗しました"
+      description: "開発チームにエラー情報を送信しました"
+    poll:
       unavailableExclusive:
         titile: "DM・グループDM内ではexオプションが利用できません"
       cannotExclusive:
-        title: "'exオプションが利用できません"
+        title: "exオプションが利用できません"
         description: "exオプションの利用にはBOTに **メッセージの管理** 権限が必要です"
-      tooLongCommand:
-        title: "コマンドが長すぎます"
-        description: "コマンドの長さは最大1200文字までです"
       tooFewArguments:
         title: "選択肢の数が指定されていません"
       tooFewOptions:
@@ -55,20 +66,11 @@ ja:
         title: "絵文字が重複しています"
       tooLongQuery:
         title: "質問文が${QUERY_MAX}文字を超えています"
+      tooLongOption:
+        title: "選択肢が${OPTION_MAX}文字を超えています"
       unavailableExternalEmoji:
         title: "外部の絵文字が利用できません"
         description: "投票に外部の絵文字を使用したい場合、このBOTに **外部の絵文字の使用** 権限が必要です"
       failed:
         title: "投票を作成できません"
         description: "投票を作成するには、このBOTに **メッセージ履歴を読む** と **リアクションの追加** 権限が必要です"
-  export:
-    wait: "投票結果CSVファイル出力中..."
-    error:
-      cannotSend:
-        title: "CSVファイルが送信できません"
-        description: "このBOTに **ファイルを添付** 権限が必要です"
-  error:
-    exception:
-      title: "予期しない原因でコマンドの実行に失敗しました"
-      description: "開発チームにエラー情報を送信しました"
-      infomation: "[ご質問・不具合報告](${SUPPORT_URL})"
