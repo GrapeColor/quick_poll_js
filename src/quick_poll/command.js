@@ -3,8 +3,6 @@
 const constants = require('./constants');
 const locales = require('./locales');
 
-const PollError = require('./error');
-
 module.exports = class Command {
   static guildPrefixes = {};
   static guildLocales = {};
@@ -129,7 +127,10 @@ module.exports = class Command {
     try {
       response = await command[commandData.name](commandData);
     } catch(error) {
-      response = await this.sendError(error, commandData);
+      try {
+        response = await this.sendError(error, commandData);
+      }
+      catch { undefined; }
     }
 
     const message = commandData.message;

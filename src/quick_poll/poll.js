@@ -2,6 +2,8 @@
 
 const constants = require('./constants');
 
+const PollError = require('./error');
+
 const excludeReaction = async (reaction, user) => {
   const botUser = user.client.user;
   const channel = reaction.message.channel;
