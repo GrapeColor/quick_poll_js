@@ -10,6 +10,8 @@ module.exports = class Command {
   static guildLocales = {};
 
   static events(bot) {
+    this.bot = bot;
+
     bot.once('ready', () => {
       bot.guilds.cache.each(guild => this.updateNick(guild));
     });
@@ -19,17 +21,19 @@ module.exports = class Command {
     });
 
     bot.on('message', message => {
+      if (message.author.bot) {
+        message.channel.messages.cache.delete(message.id);
+        return;
+      }
+
       const commandData = this.parse(message);
       if (!commandData) {
         message.channel.messages.cache.delete(message.id);
         return;
       }
 
-      try {
-        this.waitQueues[message.id] = new this(commandData);
-      } catch(error) {
-        this.sendError
-      }
+      new this().exec(commandData)
+        .catch();
     });
 
     for (const events of this.commandEvents) events(bot);
@@ -46,11 +50,8 @@ module.exports = class Command {
     if (matchLocale && locales[matchLocale[1]]) this.guildLocales[guild.id] = matchLocale[1];
   }
 
-  static DEFAULT_PREFIX = '/';
-  static DEFAULT_LOCALE = 'ja';
-
   static parse(message) {
-    const prefix = this.guildPrefixes[message.guild?.id] ?? this.DEFAULT_PREFIX;
+    const prefix = this.guildPrefixes[message.guild?.id] ?? constants.DEFAULT_PREFIX;
     const content = message.content;
 
     const escapedPrefix = prefix.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -63,16 +64,20 @@ module.exports = class Command {
     const args = this.parseString(argsString);
     if (!this.commands[args[0]]) return;
 
+    const lang = this.guildLocales[message.guild?.id] ?? constants.DEFAULT_LOCALE;
+
     return {
       prefix: prefix,
       exclusive: exclusive,
       name: args[0],
       args: args.slice(1),
-      message: message
+      message: message,
+      lang: lang
     };
   }
 
   static QUOTE_PAIRS = { '“': '”', '„': '”', "‘": "’", "‚": "’" };
+
   static parseString(string, args = []) {
     let arg = '', quote = '', escape = false;
 
@@ -108,15 +113,43 @@ module.exports = class Command {
   static commandEvents = [];
   static commands = {};
 
-  static sendError() {}
+  static queues = {};
 
-  static waitQueues = {};
+  static destroy(message) {
+    message.reactions.cache.get('↩️').users.remove(this.bot.user)
+      .catch();
 
-  constructor(commandData) {
-    const result = command[commandData.name](commandData);
+    delete this.queues[message.id];
+  }
+
+  async exec(commandData) {
+    const ownClass = this.constructor;
+    let response;
+
+    try {
+      response = await command[commandData.name](commandData);
+    } catch(error) {
+      response = await this.sendError(error, commandData);
+    }
+
+    const message = commandData.message;
 
     result.react('↩️')
-      .then(setTimeout(() => this.timeout, constants.QUEUE_TIMEOUT))
+      .then(() => {
+        ownClass.queues[message.id] = this;
+        setTimeout(() => ownClass.destroy(message), constants.QUEUE_TIMEOUT);
+      })
       .catch();
-  };
+  }
+
+  sendError(error, commandData) {
+    const channel = commandData.message.channel;
+
+    return channel.send({
+      embed: {
+        title: `⚠️ ${error.title}`,
+        description: error.description
+      }
+    });
+  }
 }
