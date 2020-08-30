@@ -8,12 +8,12 @@ const excludeReaction = async (reaction, user) => {
   if (user.equals(botUser) || !channel || channel.type === 'dm') return;
 
   const message = await reaction.message.fetch();
-
   const pollEmbed = message.embeds[0];
-  if (!pollEmbed || !message.author.equals(botUser)) return;
-
-  const pollColor = pollEmbed.color;
-  if (pollColor !== constants.COLOR_POLL && pollColor !== constants.COLOR_EXPOLL) return;
+  const pollColor = pollEmbed?.color;
+  if (!message.author.equals(botUser) || pollColor !== constants.COLOR_POLL && pollColor !== constants.COLOR_EXPOLL) {
+    channel.messages.cache.delete(message.id);
+    return;
+  }
 
   const partial = reaction.partial;
   const emoji = reaction.emoji;
@@ -26,8 +26,8 @@ const excludeReaction = async (reaction, user) => {
 
   const myReactions = reactions.cache.filter(reaction => reaction.me);
 
-  if (reaction.lenght > 0 && !myReactions.some(reaction => reaction.emoji.name === emoji.name)) {
-    myReactions.get(emoji.id ?? emoji.name).users.remove(user)
+  if (myReactions.lenght > 0 && !reaction.me) {
+    reactions.get(emoji.id ?? emoji.name).users.remove(user)
       .catch();
     return;
   }
