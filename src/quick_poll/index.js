@@ -1,6 +1,9 @@
 'use strict';
 
 const { Client, Intents } = require('discord.js');
+
+const constants = require('./constants');
+
 const Command = require('./command');
 const Admin = require('./admin');
 
@@ -46,12 +49,13 @@ module.exports = class QuickPoll {
 
   updateStatus(count) {
     const bot = this.bot;
+    const prefix = constants.DEFAULT_PREFIX;
 
     switch(count % 4) {
       case 0:
       case 1:
         bot.user.setPresence({
-          activity: { name: '/poll | ex/poll', type: 'LISTENING' },
+          activity: { name: `${prefix}poll | ex${prefix}poll`, type: 'LISTENING' },
           status: 'online',
           shardID: this.shards
         }).catch(console.error);

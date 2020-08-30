@@ -4,6 +4,9 @@ const { Permissions } = require('discord.js');
 
 exports.REQUIRED_PERMISSIONS = new Permissions(388160);
 
+exports.DEFAULT_PREFIX = '/';
+exports.DEFAULT_LOCALE = 'ja';
+
 exports.COLOR_POLL   = 0x3b88c3;
 exports.COLOR_EXPOLL = 0x3b88c4;
 exports.COLOR_RESULT = 0xdd2e44;
