@@ -30,8 +30,23 @@ module.exports = class Command {
         return;
       }
 
-      new this().exec(commandData)
+      new this().respond(commandData)
         .catch();
+    });
+
+    bot.on('messageReactionAdd', async (reaction, user) => {
+      if (reaction.emoji.name !== '↩️') return;
+
+      const message = await reaction.message.fetch();
+      if (!user.equals(message.author)) {
+        message.channel.messages.cache.delete(message.id);
+        return;
+      }
+
+      const command = this.queues[message.id];
+      if (!command) return;
+
+      command.cancel();
     });
 
     for (const events of this.commandEvents) events(bot);
@@ -44,7 +59,7 @@ module.exports = class Command {
     const matchPrefix = guild.me.nickname?.match(this.CUSTOM_PREFIX_REGEX);
     const matchLocale = guild.me.nickname?.match(this.LOCALE_REGEX);
 
-    if (matchPrefix) this.guildPrefixes[guild.id] = matchPrefix[1];
+    this.guildPrefixes[guild.id] = matchPrefix ? matchPrefix[1] : constants.DEFAULT_PREFIX;
     if (matchLocale && locales[matchLocale[1]]) this.guildLocales[guild.id] = matchLocale[1];
   }
 
@@ -65,6 +80,7 @@ module.exports = class Command {
     const lang = this.guildLocales[message.guild?.id] ?? constants.DEFAULT_LOCALE;
 
     return {
+      bot: message.client,
       prefix: prefix,
       exclusive: exclusive,
       name: args[0],
@@ -109,36 +125,36 @@ module.exports = class Command {
   }
 
   static commandEvents = [];
+
+  static addEvents(events) {
+    this.commandEvents.push(events);
+  }
+
   static commands = {};
+
+  static addCommands(commands) {
+    Object.assign(this.commands, commands);
+  }
 
   static queues = {};
 
-  static destroy(message) {
-    message.reactions.cache.get('↩️').users.remove(this.bot.user)
-      .catch();
-
-    delete this.queues[message.id];
-  }
-
-  async exec(commandData) {
-    const ownClass = this.constructor;
-    let response;
+  async respond(commandData) {
+    this.bot = commandData.bot;
+    this.message = commandData.message;
 
     try {
-      response = await command[commandData.name](commandData);
+      this.response = await this.constructor.commands[commandData.name](commandData);
     } catch(error) {
       try {
-        response = await this.sendError(error, commandData);
+        this.response = await this.sendError(error, commandData);
       }
       catch { undefined; }
     }
 
-    const message = commandData.message;
-
-    result.react('↩️')
+    this.message.react('↩️')
       .then(() => {
-        ownClass.queues[message.id] = this;
-        setTimeout(() => ownClass.destroy(message), constants.QUEUE_TIMEOUT);
+        this.constructor.queues[this.message.id] = this;
+        this.timeout = setTimeout(() => this.clearQueue(), constants.QUEUE_TIMEOUT);
       })
       .catch();
   }
@@ -152,5 +168,20 @@ module.exports = class Command {
         description: error.description
       }
     });
+  }
+
+  cancel() {
+    clearTimeout(this.timeout);
+    this.clearQueue();
+
+    this.response.delete()
+      .catch();
+  }
+
+  clearQueue() {
+    this.message.reactions.cache.get('↩️').users.remove(this.bot.user)
+      .catch();
+
+    delete this.constructor.queues[this.message.id];
   }
 }

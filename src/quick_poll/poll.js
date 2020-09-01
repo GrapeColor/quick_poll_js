@@ -7,7 +7,7 @@ const PollError = require('./error');
 const excludeReaction = async (reaction, user) => {
   const botUser = user.client.user;
   const channel = reaction.message.channel;
-  if (user.equals(botUser) || !channel || channel.type === 'dm') return;
+  if (user.bot || !channel || channel.type === 'dm') return;
 
   const message = await reaction.message.fetch();
   const pollEmbed = message.embeds[0];
@@ -44,8 +44,11 @@ const excludeReaction = async (reaction, user) => {
   }
 }
 
-const createPoll = commandData => {
-  
+const createPoll = async commandData => {
+  const message = commandData.message;
+  const channel = message.channel;
+
+  return await channel.send('Test Message');
 }
 
 exports.events = bot => {

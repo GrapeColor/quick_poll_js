@@ -84,6 +84,6 @@ Command.commandEvents = [
   poll.events
 ];
 
-Command.commands = {
-  ...poll.commands
-};
+Command.addEvents(poll.events);
+
+Command.addCommands(poll.commands);

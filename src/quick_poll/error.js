@@ -3,7 +3,9 @@
 const { locales } = require('./locales');
 
 module.exports = class PollError {
-  constructor(exception, lang = 'ja', variables = {}) {
+  constructor(response, exception, lang = 'ja', variables = {}) {
+    this.response = response;
+
     const errors = locales[lang].errors;
     const error = errors.poll[exception] ?? errors.unexpect;
     const infomation = locales[lang].errors.infomation;
