@@ -1,7 +1,9 @@
 'use strict';
 
+const { MessageEmbed } = require('discord.js');
+
 const constants = require('./constants');
-const locales = require('./locales');
+const { locales } = require('./locales');
 
 module.exports = class Command {
   static guildPrefixes = {};
@@ -21,6 +23,17 @@ module.exports = class Command {
     bot.on('message', message => {
       if (message.author.bot) {
         message.channel.messages.cache.delete(message.id);
+        return;
+      }
+
+      const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
+      if (matchMention) {
+        new this().respond({
+          bot: message.client,
+          lang: this.getGuildLanguage(message.guild),
+          prefix: this.getGuildPrefix(message.guild),
+          args: []
+        });
         return;
       }
 
@@ -52,19 +65,24 @@ module.exports = class Command {
     for (const events of this.commandEvents) events(bot);
   }
 
-  static CUSTOM_PREFIX_REGEX = /\[([!-~]{1,4}?)\]/;
-  static LOCALE_REGEX = /<(\w{2})>/;
-
   static updateNick(guild) {
-    const matchPrefix = guild.me.nickname?.match(this.CUSTOM_PREFIX_REGEX);
-    const matchLocale = guild.me.nickname?.match(this.LOCALE_REGEX);
+    const matchPrefix = guild.me.nickname?.match(/\[([!-~]{1,4}?)\]/);
+    const matchLocale = guild.me.nickname?.match(/<(\w{2})>/);
 
     this.guildPrefixes[guild.id] = matchPrefix ? matchPrefix[1] : constants.DEFAULT_PREFIX;
     if (matchLocale && locales[matchLocale[1]]) this.guildLocales[guild.id] = matchLocale[1];
   }
 
+  static getGuildPrefix(guild) {
+    return this.guildPrefixes[guild?.id] ?? constants.DEFAULT_PREFIX;
+  }
+
+  static getGuildLanguage(guild) {
+    return this.guildLocales[guild?.id] ?? constants.DEFAULT_LOCALE;
+  }
+
   static parse(message) {
-    const prefix = this.guildPrefixes[message.guild?.id] ?? constants.DEFAULT_PREFIX;
+    const prefix = this.getGuildPrefix(message.guild);
     const content = message.content;
 
     const escapedPrefix = prefix.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -77,16 +95,14 @@ module.exports = class Command {
     const args = this.parseString(argsString);
     if (!this.commands[args[0]]) return;
 
-    const lang = this.guildLocales[message.guild?.id] ?? constants.DEFAULT_LOCALE;
-
     return {
       bot: message.client,
+      lang: this.getGuildLanguage(message.guild),
       prefix: prefix,
       exclusive: exclusive,
       name: args[0],
       args: args.slice(1),
-      message: message,
-      lang: lang
+      attachment: message.attachments.first()
     };
   }
 
@@ -143,7 +159,11 @@ module.exports = class Command {
     this.message = commandData.message;
 
     try {
-      this.response = await this.constructor.commands[commandData.name](commandData);
+      if (commandData.args.length) {
+        this.response = await this.constructor.commands[commandData.name](commandData);
+      } else {
+        this.response = await this.callHelp(commandData);
+      }
     } catch(error) {
       try {
         this.response = await this.sendError(error, commandData);
@@ -159,11 +179,44 @@ module.exports = class Command {
       .catch();
   }
 
+  async callHelp(commandData) {
+    const channel = commandData.message.channel;
+    const help = locales[commandData.lang].help;
+
+    const response = await channel.send({ embed: {
+      color: constants.COLOR_WAIT,
+      title: `⌛ ${help.wait}`
+    } });
+
+    const embed = new MessageEmbed({
+      color: constants.COLOR_HELP,
+      title: help.title,
+      url: help.url,
+      description: help.description.replace(/\$\{HELP_URL\}/, help.url)
+    });
+
+    const inviteUrl = await commandData.bot.generateInvite(constants.REQUIRED_PERMISSIONS);
+
+    for (const field of help.fields) {
+      let value = field.value.replace(/\$\{PREFIX\}/, commandData.prefix);
+      value = value.replace(/\$\{DONATION_URL\}/, process.env.DONATION_URL);
+      value = value.replace(/\$\{SUPPORT_URL\}/, process.env.SUPPORT_URL);
+      value = value.replace(/\$\{INVITE_URL\}/, inviteUrl);
+
+      embed.addField(field.name, value);
+    }
+
+    return response.edit({ embed: embed });
+  }
+
   sendError(error, commandData) {
     const channel = commandData.message.channel;
 
+    if (!error.title) return console.error(error);
+
     return channel.send({
       embed: {
+        color: constants.COLOR_ERROR,
         title: `⚠️ ${error.title}`,
         description: error.description
       }
