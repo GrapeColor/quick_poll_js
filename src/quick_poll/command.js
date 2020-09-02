@@ -10,8 +10,6 @@ module.exports = class Command {
   static guildLocales = {};
 
   static events(bot) {
-    this.bot = bot;
-
     bot.once('ready', () => {
       bot.guilds.cache.each(guild => this.updateNick(guild));
     });
@@ -28,12 +26,7 @@ module.exports = class Command {
 
       const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
       if (matchMention) {
-        new this().respond({
-          bot: message.client,
-          lang: this.getGuildLanguage(message.guild),
-          prefix: this.getGuildPrefix(message.guild),
-          args: []
-        });
+        this.sendHelp(message);
         return;
       }
 
@@ -81,6 +74,17 @@ module.exports = class Command {
     return this.guildLocales[guild?.id] ?? constants.DEFAULT_LOCALE;
   }
 
+  static sendHelp(message) {
+    new this().respond({
+      bot: message.client,
+      lang: this.getGuildLanguage(message.guild),
+      message: message,
+      prefix: this.getGuildPrefix(message.guild),
+      args: []
+    })
+      .catch();
+  }
+
   static parse(message) {
     const prefix = this.getGuildPrefix(message.guild);
     const content = message.content;
@@ -98,11 +102,11 @@ module.exports = class Command {
     return {
       bot: message.client,
       lang: this.getGuildLanguage(message.guild),
+      message: message,
       prefix: prefix,
       exclusive: exclusive,
       name: args[0],
-      args: args.slice(1),
-      attachment: message.attachments.first()
+      args: args.slice(1)
     };
   }
 
