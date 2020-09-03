@@ -16,6 +16,4 @@ const localesData = () => {
   return yaml.safeLoad(data);
 }
 
-console.log(localesData());
-
 exports.locales = localesData();
