@@ -187,11 +187,6 @@ module.exports = class Command {
     const channel = commandData.message.channel;
     const help = locales[commandData.lang].help;
 
-    const response = await channel.send({ embed: {
-      color: constants.COLOR_WAIT,
-      title: `⌛ ${help.wait}`
-    } });
-
     const embed = new MessageEmbed({
       color: constants.COLOR_HELP,
       title: help.title,
@@ -208,7 +203,7 @@ module.exports = class Command {
       embed.addField(field.name, value);
     }
 
-    return response.edit({ embed: embed });
+    return channel.send({ embed: embed });
   }
 
   sendError(error, commandData) {
