@@ -2,10 +2,10 @@ ja:
   help:
     wait: "ヘルプ表示生成中..."
     title: "📊 Quick Pollの使い方"
-    url: "https://grapecolor.github.io/quick_poll/"
+    url: "${MANUAL_URL}"
     description: |
       アンケートを作成し、投票を募ることができるBOTです。
-      各コマンドの詳しい利用方法は**[こちら](${HELP_URL})**をご覧ください。
+      各コマンドの詳しい利用方法は**[こちら](${MANUAL_URL})**をご覧ください。
     fields:
       - name: "🇦 🇧 🇨 🇩 …で選択できる投票を作る"
         value: "```${PREFIX}poll 好きな果物は？ りんご ぶどう みかん キウイ```"
