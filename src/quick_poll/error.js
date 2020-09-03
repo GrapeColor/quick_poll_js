@@ -3,24 +3,13 @@
 const { locales } = require('./locales');
 
 module.exports = class PollError {
-  constructor(response, exception, lang = 'ja', variables = {}) {
-    this.response = response;
-
+  constructor(response, exception, lang) {
     const errors = locales[lang].errors;
-    const error = errors.poll[exception] ?? errors.unexpect;
+    const error = typeof exception === 'string' && errors.poll[exception] ?? errors.unexpect;
     const infomation = locales[lang].errors.infomation;
 
-    let title = error.title;
-    let description = `${error.description ?? ''}\n\n${infomation}`;
-
-    variables = { ...variables, ...process.env };
-
-    title = title.replace(/\$\{(\w+)\}/g, (_, key) => this.replacer(variables, key));
-    description = description.replace(/\$\{(\w+)\}/g, (_, key) => this.replacer(variables, key));
-
-    this.title = title;
-    this.description = description;
+    this.response = response;
+    this.title = error.title;
+    this.description = `${error.description ?? ''}\n\n${infomation}`;
   }
-
-  replacer(variables, key) { return `${variables[key] ?? '' }`; }
 }
