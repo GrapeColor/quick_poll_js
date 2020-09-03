@@ -1,8 +1,6 @@
 'use strict';
 
 module.exports = class Admin {
-  static SPLIT_REGEX = /.*\n?/g;
-
   static events(bot) {
     const adminIds = process.env.ADMIN_USER_IDS.split(',');
     const evalRegex = new RegExp(`^<@!?${bot.user.id}> admin\\n\`\`\`\\n(.+)\\n\`\`\``, 's');
@@ -35,7 +33,7 @@ module.exports = class Admin {
     const contents = [];
     let part = '```';
 
-    for (const match of content.matchAll(this.SPLIT_REGEX)) {
+    for (const match of content.matchAll(/.*\n?/g)) {
       if (part.length + match[0].length > limit - 3) {
         contents.push(`${part}\`\`\``);
         part = '```';

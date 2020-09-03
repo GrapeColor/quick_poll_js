@@ -214,11 +214,12 @@ module.exports = class Command {
   }
 
   sendError(error, commandData) {
-    const channel = commandData.message.channel;
+    error.response.delete()
+      .catch();
 
     if (!error.title) return console.error(error);
 
-    return channel.send({
+    return commandData.message.channel.send({
       embed: {
         color: constants.COLOR_ERROR,
         title: `⚠️ ${error.title}`,
