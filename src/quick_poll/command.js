@@ -196,15 +196,13 @@ module.exports = class Command {
       color: constants.COLOR_HELP,
       title: help.title,
       url: help.url,
-      description: help.description.replace(/\$\{HELP_URL\}/, help.url)
+      description: help.description
     });
 
     const inviteUrl = await commandData.bot.generateInvite(constants.REQUIRED_PERMISSIONS);
 
     for (const field of help.fields) {
       let value = field.value.replace(/\$\{PREFIX\}/, commandData.prefix);
-      value = value.replace(/\$\{DONATION_URL\}/, process.env.DONATION_URL);
-      value = value.replace(/\$\{SUPPORT_URL\}/, process.env.SUPPORT_URL);
       value = value.replace(/\$\{INVITE_URL\}/, inviteUrl);
 
       embed.addField(field.name, value);
