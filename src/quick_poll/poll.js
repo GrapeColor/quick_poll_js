@@ -53,12 +53,12 @@ const createPoll = async commandData => {
   const message = commandData.message;
   const channel = message.channel;
 
-  const informations = locales[commandData.lang].poll;
+  const labels = locales[commandData.lang].poll;
 
   let response;
 
   try {
-    response = sendWaiter(channel, informations);
+    response = sendWaiter(channel, labels);
   } catch(error) {
     throw new PollError(response, error, commandData.lang);
   }
@@ -66,11 +66,11 @@ const createPoll = async commandData => {
   return response;
 }
 
-const sendWaiter = (channel, informations) => {
+const sendWaiter = (channel, labels) => {
   return channel.send({
     embed: {
       color: constants.COLOR_WAIT,
-      title: `⌛ ${informations.wait}`
+      title: `⌛ ${labels.wait}`
     }
   });
 }
