@@ -3,6 +3,7 @@
 const constants = require('./constants');
 
 const PollError = require('./error');
+const { locales } = require('./locales');
 
 const excludeReaction = async (reaction, user) => {
   const botUser = user.client.user;
@@ -44,19 +45,40 @@ const excludeReaction = async (reaction, user) => {
   }
 }
 
+exports.events = bot => {
+  bot.on('messageReactionAdd', (reaction, user) => excludeReaction(reaction, user));
+}
+
 const createPoll = async commandData => {
   const message = commandData.message;
   const channel = message.channel;
 
-  return await channel.send('Test Message');
+  const informations = locales[commandData.lang].poll;
+
+  let response;
+
+  try {
+    response = sendWaiter(channel, informations);
+  } catch(error) {
+    throw new PollError(response, error, commandData.lang);
+  }
+
+  return response;
 }
 
-exports.events = bot => {
-  bot.on('messageReactionAdd', (reaction, user) => excludeReaction(reaction, user));
-};
+const sendWaiter = (channel, informations) => {
+  return channel.send({
+    embed: {
+      color: constants.COLOR_WAIT,
+      title: `⌛ ${informations.wait}`
+    }
+  });
+}
+
+const parseArgs = commandData => {}
 
 exports.commands = {
   poll: commandData => createPoll(commandData),
   numpoll: commandData => createPoll(commandData),
   freepoll: commandData => createPoll(commandData)
-}
+};
