@@ -3,7 +3,7 @@
 const { MessageEmbed } = require('discord.js');
 
 const constants = require('./constants');
-const { locales } = require('./locales');
+const { locales, varsResolve } = require('./locales');
 
 module.exports = class Command {
   static guildPrefixes = {};
@@ -198,10 +198,10 @@ module.exports = class Command {
     const inviteUrl = await commandData.bot.generateInvite(constants.REQUIRED_PERMISSIONS);
 
     for (const field of help.fields) {
-      let value = field.value.replace(/\$\{PREFIX\}/, commandData.prefix);
-      value = value.replace(/\$\{INVITE_URL\}/, inviteUrl);
-
-      embed.addField(field.name, value);
+      embed.addField(field.name, varsResolve(field.value, {
+        PREFIX: commandData.prefix,
+        INVITE_URL: inviteUrl
+      }));
     }
 
     return channel.send({ embed: embed });

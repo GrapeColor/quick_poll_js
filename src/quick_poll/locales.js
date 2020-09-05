@@ -6,7 +6,7 @@ const yaml = require('js-yaml');
 const constants = require('./constants');
 const variables = { ...process.env, ...constants };
 
-const replacer = (match, key) => { return variables[key] ?? match; }
+const replacer = (match, key, vars = variables) => { return vars[key] ?? match; }
 
 const localesData = () => {
   let data = fs.readFileSync(`${__dirname}/locales/locales.yml`, 'utf-8');
@@ -17,3 +17,7 @@ const localesData = () => {
 }
 
 exports.locales = localesData();
+
+exports.varsResolve = (string, table = {}) => {
+  return string.replace(/\$\{(\w+)\}/g, (match, key) => replacer(match, key, table));
+}
