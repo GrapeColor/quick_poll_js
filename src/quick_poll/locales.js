@@ -18,6 +18,6 @@ const localesData = () => {
 
 exports.locales = localesData();
 
-exports.varsResolve = (string, table = {}) => {
-  return string.replace(/\$\{(\w+)\}/g, (match, key) => replacer(match, key, table));
+exports.varsResolve = (string, vars = {}) => {
+  return string.replace(/\$\{(\w+)\}/g, (match, key) => replacer(match, key, vars));
 }
