@@ -78,7 +78,7 @@ module.exports = class QuickPoll {
   }
 }
 
-const poll = require('./poll');
+const poll = require('./commands/poll');
 
 Command.commandEvents = [
   poll.events

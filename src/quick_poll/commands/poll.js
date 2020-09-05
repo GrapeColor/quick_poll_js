@@ -1,9 +1,9 @@
 'use strict';
 
-const constants = require('./constants');
+const constants = require('../constants');
 
-const PollError = require('./error');
-const { locales } = require('./locales');
+const PollError = require('../error');
+const { locales } = require('../locales');
 
 const excludeReaction = async (reaction, user) => {
   const botUser = user.client.user;
