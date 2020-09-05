@@ -16,6 +16,5 @@ exports.COLOR_WAIT   = 0x9867c6;
 exports.COLOR_ERROR  = 0xffcc4d;
 exports.COLOR_HELP   = 0xff922f;
 
-exports.MAX_OPTIONS = 20;
 exports.QUERY_MAX = 200;
 exports.OPTION_MAX = 200;
