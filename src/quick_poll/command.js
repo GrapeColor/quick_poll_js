@@ -208,7 +208,7 @@ module.exports = class Command {
   }
 
   sendError(error, commandData) {
-    error.response.delete()
+    error.response?.delete()
       .catch();
 
     if (!error.title) return console.error(error);
