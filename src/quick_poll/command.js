@@ -49,10 +49,10 @@ module.exports = class Command {
         return;
       }
 
-      const command = this.queues[message.id];
-      if (!command) return;
+      const queue = this.queues[message.id];
+      if (!queue) return;
 
-      command.cancel();
+      queue.cancel();
     });
 
     for (const events of this.commandEvents) events(bot);
@@ -164,7 +164,8 @@ module.exports = class Command {
 
     try {
       if (commandData.args.length) {
-        this.response = await this.constructor.commands[commandData.name](commandData);
+        command = this.constructor.commands[commandData.name](commandData);
+        this.response = await command.exec();
       } else {
         this.response = await this.callHelp(commandData);
       }
