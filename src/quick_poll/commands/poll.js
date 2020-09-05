@@ -1,8 +1,10 @@
 'use strict';
 
+const Twemoji = require('twemoji');
+
 const constants = require('../constants');
 
-const PollError = require('../error');
+const CommandError = require('../error');
 const { locales } = require('../locales');
 
 module.exports = class Poll {
@@ -56,20 +58,33 @@ module.exports = class Poll {
     freepoll: commandData => new this(commandData)
   };
 
-  constructor(commandData) {
-    this.commandData = commandData;
-  }
+  static DEFAULT_EMOJIS = [ '🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹' ];
+  static NUMERICAL_EMOJIS = [ '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟' ];
 
-  async exec() {
-    this.message = this.commandData.message;
-    this.channel = message.channel;
+  constructor(commandData) {
+    this.bot = commandData.bot;
+    this.lang = commandData.lang;
+    this.message = commandData.message;
+    this.prefix = commandData.prefix;
+    this.exclusive = commandData.exclusive;
+    this.name = commandData.name;
+    this.args = commandData.args;
 
     this.labels = locales[this.commandData.lang].poll;
 
+    this.channel = this.message.channel;
+    if (this.channel.type !== 'dm') {
+      this.permissions = this.channel.permissionsFor(this.bot.user);
+    }
+  }
+
+  async exec() {
     try {
       this.response = await this.sendWaiter();
+
+      this.can_exclusively();
     } catch(error) {
-      throw new PollError(this.response, error, this.commandData.lang);
+      throw new CommandError(this.response, error, this.commandData.lang);
     }
 
     return response;
@@ -82,5 +97,11 @@ module.exports = class Poll {
         title: `⌛ ${this.labels.wait}`
       }
     });
+  }
+
+  can_exclusively() {
+    if (!this.exclusive) return;
+    if (!this.permissions) throw 'unavailableExclusive';
+    if (!this.permissions.has('MANAGE_MESSAGES')) throw 'cannotExclusive';
   }
 }
