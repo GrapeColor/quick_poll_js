@@ -1,6 +1,7 @@
 'use strict';
 
 const Twemoji = require('twemoji');
+const _ = require('lodash');
 
 const constants = require('../constants');
 
@@ -36,7 +37,7 @@ module.exports = class Poll {
   
     const myReactions = reactions.cache.filter(reaction => reaction.me);
   
-    if (myReactions.lenght > 0 && !reaction.me) {
+    if (myReactions.length && !reaction.me) {
       reactions.get(emoji.id ?? emoji.name).users.remove(user)
         .catch();
       return;
@@ -54,12 +55,12 @@ module.exports = class Poll {
 
   static commands = {
     poll: commandData => new this(commandData),
-    numpoll: commandData => new this(commandData),
-    freepoll: commandData => new this(commandData)
+    freepoll: commandData => new this(commandData),
+    numpoll: commandData => new this(commandData)
   };
 
-  static DEFAULT_EMOJIS = [ '🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹' ];
-  static NUMERICAL_EMOJIS = [ '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟' ];
+  static DEFAULT_EMOJIS = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹'];
+  static NUMERICAL_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
   constructor(commandData) {
     this.bot = commandData.bot;
@@ -81,10 +82,13 @@ module.exports = class Poll {
   async exec() {
     try {
       this.response = await this.sendWaiter();
-
       this.can_exclusively();
+      this.parse_command();
     } catch(error) {
-      throw new CommandError(this.response, error, this.commandData.lang);
+      throw new CommandError(this.response, error, this.commandData.lang, {
+        MAX_OPTIONS: Poll.DEFAULT_EMOJIS.length,
+        MAX_NUMBER: Poll.NUMERICAL_EMOJIS.length
+      });
     }
 
     return response;
@@ -104,4 +108,58 @@ module.exports = class Poll {
     if (!this.permissions) throw 'unavailableExclusive';
     if (!this.permissions.has('MANAGE_MESSAGES')) throw 'unusableExclusive';
   }
+
+  parse_command() {
+    this.query = this.args.shift();
+
+    switch (this.name) {
+      case 'freepoll':
+        this.options = {};
+        break;
+
+      case 'numpoll':
+        if (!this.args.length) throw 'unspecifiedNumber';
+
+        const number = Number(this.args[0].replace(/[０-９]/g, match => String.fromCharCode(match.charCodeAt() - 0xFEE0)));
+        if (number < 1) throw 'tooSmallNumber';
+        if (number > Poll.NUMERICAL_EMOJIS.length) throw 'tooLargeNumber';
+
+        this.options = _.zipObject(Poll.NUMERICAL_EMOJIS.slice(0, number), []);
+        break;
+
+      default:
+        if (!this.args.length) {
+          this.options = { '⭕': undefined, '❌': undefined };
+          break;
+        }
+
+        if (this.args.length > Poll.DEFAULT_EMOJIS.length * 2) throw 'tooManyOptions';
+
+        if (!(_.partition(emojis, emoji => this.isEmoji(emoji))[1].length)) {
+          if (this.args.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
+          if (this.args.length > _.uniq(this.args).length) throw 'duplicateEmojis';
+
+          this.options = _.zipObject(this.args, []);
+          break;
+        }
+
+        let index = 0;
+        const [emojis, strings] = _.partition(this.args, _ => (++index) % 2);
+
+        if (!(this.args.length % 2) && !(_.partition(emojis, emoji => this.isEmoji(emoji))[1].length)) {
+          if (emojis.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
+          if (emojis.length > _.uniq(emojis).length) throw 'duplicateEmojis';
+
+          this.options = _.zipObject(emojis, strings);
+          break;
+        }
+
+        if (this.args.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
+
+        this.options = _.zipObject(Poll.DEFAULT_EMOJIS.slice(0, this.args.length), this.args);
+        break;
+    }
+  }
+
+  isEmoji(arg) { return /^<a?:.+?:\d+>$/.test(arg) || Twemoji.test(arg); }
 }

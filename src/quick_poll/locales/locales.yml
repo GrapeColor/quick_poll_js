@@ -50,7 +50,7 @@ ja:
         description: "exオプションの利用にはBOTに **メッセージの管理** 権限が必要です"
       tooManyOptions:
         title: "選択肢が ${MAX_OPTIONS} 個を超えています"
-      tooFewArguments:
+      unspecifiedNumber:
         title: "選択肢の数が指定されていません"
       tooSmallNumber:
         title: "指定された選択肢の数が 1 を下回っています"
