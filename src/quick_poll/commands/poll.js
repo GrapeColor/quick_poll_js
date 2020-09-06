@@ -102,6 +102,6 @@ module.exports = class Poll {
   can_exclusively() {
     if (!this.exclusive) return;
     if (!this.permissions) throw 'unavailableExclusive';
-    if (!this.permissions.has('MANAGE_MESSAGES')) throw 'cannotExclusive';
+    if (!this.permissions.has('MANAGE_MESSAGES')) throw 'unusableExclusive';
   }
 }
