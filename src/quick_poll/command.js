@@ -164,7 +164,7 @@ module.exports = class Command {
 
     try {
       if (commandData.args.length) {
-        command = this.constructor.commands[commandData.name](commandData);
+        command = Command.commands[commandData.name](commandData);
         this.response = await command.exec();
       } else {
         this.response = await this.callHelp(commandData);
@@ -178,7 +178,7 @@ module.exports = class Command {
 
     this.message.react('↩️')
       .then(() => {
-        this.constructor.queues[this.message.id] = this;
+        Command.queues[this.message.id] = this;
         this.timeout = setTimeout(() => this.clearQueue(), constants.QUEUE_TIMEOUT);
       })
       .catch();
@@ -234,6 +234,6 @@ module.exports = class Command {
     this.message.reactions.cache.get('↩️').users.remove(this.bot.user)
       .catch();
 
-    delete this.constructor.queues[this.message.id];
+    delete Command.queues[this.message.id];
   }
 }
