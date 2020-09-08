@@ -2,12 +2,12 @@
 
 module.exports = class Admin {
   static events(bot) {
-    const adminIds = process.env.ADMIN_USER_IDS.split(',');
+    const adminIDs = process.env.ADMIN_USER_IDS.split(',');
     const evalRegex = new RegExp(`^<@!?${bot.user.id}> admin\\n\`\`\`\\n(.+)\\n\`\`\``, 's');
 
     bot.on('message', message => {
       if (message.channel.type !== 'dm') return;
-      if (!adminIds.includes(message.author.id)) return;
+      if (!adminIDs.includes(message.author.id)) return;
 
       const matchedCode = message.content.match(evalRegex);
       if (!matchedCode) return;
