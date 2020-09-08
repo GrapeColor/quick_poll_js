@@ -16,6 +16,6 @@
     "dotenv": "^8.2.0",
     "js-yaml": "^3.14.0",
     "lodash": "^4.17.20",
-    "twemoji": "^13.0.1"
+    "twemoji-parser": "^13.0.0"
   }
 }
