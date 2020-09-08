@@ -58,16 +58,19 @@ ja:
         title: "指定された選択肢の数が ${MAX_NUMBER} を超えています"
       duplicateEmojis:
         title: "絵文字が重複しています"
-      unavailableEmojis:
-        title: "BOTが使用できない絵文字が含まれています"
-        description: "外部サーバーの絵文字を利用するには、そのサーバーにこのBOTを導入する必要があります"
       tooLongQuery:
         title: "質問文が ${QUERY_MAX} 文字を超えています"
       tooLongOption:
         title: "選択肢が ${OPTION_MAX} 文字を超えています"
-      unavailableExternalEmoji:
-        title: "外部の絵文字が利用できません"
+      unknownEmoji:
+        title: "外部サーバーの絵文字が使用できません"
+        description: "投票に外部サーバーの絵文字を使用したい場合、そのサーバーへBOTを導入する必要があります"
+      denyExternalEmojis:
+        title: "外部サーバーの絵文字が使用できません"
         description: "投票に外部の絵文字を使用したい場合、このBOTに **外部の絵文字の使用** 権限が必要です"
+      unavailableEmoji:
+        title: "使用できない絵文字が含まれています"
+        description: "BOTに与えられたロールでは使用できない絵文字が含まれています"
       cannotReact:
         title: "投票を作成できません"
         description: "投票を作成するには、このBOTに **メッセージ履歴を読む** と **リアクションの追加** 権限が必要です"
