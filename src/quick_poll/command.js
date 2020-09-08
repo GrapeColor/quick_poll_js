@@ -44,7 +44,8 @@ module.exports = class Command {
       if (reaction.emoji.name !== '↩️') return;
 
       const message = await reaction.message.fetch();
-      if (!user.equals(message.author)) {
+
+      if (user.id !== message.author.id) {
         message.channel.messages.cache.delete(message.id);
         return;
       }
@@ -63,6 +64,7 @@ module.exports = class Command {
     const matchLocale = guild.me.nickname?.match(/<(\w{2})>/);
 
     this.guildPrefixes[guild.id] = matchPrefix ? matchPrefix[1] : constants.DEFAULT_PREFIX;
+
     if (matchLocale && locales[matchLocale[1]]) this.guildLocales[guild.id] = matchLocale[1];
   }
 
@@ -92,11 +94,13 @@ module.exports = class Command {
     const escapedPrefix = prefix.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const commandRegex = new RegExp(`^(ex)?${escapedPrefix}`);
     const match = content.match(commandRegex);
+
     if (!match) return;
 
     const exclusive = !!match[1];
     const argsString = content.slice(match[0].length);
     const args = this.parseString(argsString);
+
     if (!this.commands[args[0]]) return;
 
     return {
@@ -146,15 +150,11 @@ module.exports = class Command {
 
   static commandEvents = [];
 
-  static addEvents(events) {
-    this.commandEvents.push(events);
-  }
+  static addEvents(events) { this.commandEvents.push(events); }
 
   static commands = {};
 
-  static addCommands(commands) {
-    Object.assign(this.commands, commands);
-  }
+  static addCommands(commands) { Object.assign(this.commands, commands); }
 
   static queues = {};
 
