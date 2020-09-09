@@ -11,7 +11,7 @@ const { locales } = require('../locales');
 
 module.exports = class Poll {
   static events(bot) {
-    bot.on('messageReactionAdd', (reaction, user) => excludeReaction(reaction, user));
+    bot.on('messageReactionAdd', (reaction, user) => Poll.excludeReaction(reaction, user));
   }
 
   static async excludeReaction(reaction, user) {
@@ -71,6 +71,8 @@ module.exports = class Poll {
   ];
   static NUMERICAL_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
+  static IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+
   constructor(commandData) {
     this.bot = commandData.bot;
     this.lang = commandData.lang;
@@ -80,12 +82,14 @@ module.exports = class Poll {
     this.name = commandData.name;
     this.args = commandData.args;
 
-    this.labels = locales[this.commandData.lang].poll;
+    this.texts = locales[this.lang].poll;
 
+    this.user = this.message.author;
     this.channel = this.message.channel;
     this.guild = this.channel.guild;
 
-    if (this.channel.type !== 'dm') {
+    if (this.guild) {
+      this.member = this.guild.members.resolve(this.user);
       this.permissions = this.channel.permissionsFor(this.bot.user);
       this.allowManageMessages = this.permissions.has('MANAGE_MESSAGES');
       this.allowExternalEmojis = this.permissions.has('USE_EXTERNAL_EMOJIS');
@@ -94,11 +98,16 @@ module.exports = class Poll {
 
   async exec() {
     try {
-      this.response = await this.sendWaiter();
+      await this.sendWaiter();
 
       this.canExclusively();
       this.parseArgs();
       this.optionsValidation();
+      this.getAttachement();
+
+      await this.sendPoll();
+
+      await this.addReactions();
     } catch(error) {
       throw new CommandError(this.response, error, this.lang, {
         MAX_OPTIONS: Poll.DEFAULT_EMOJIS.length,
@@ -106,14 +115,14 @@ module.exports = class Poll {
       });
     }
 
-    return response;
+    return this.response;
   }
 
-  sendWaiter() {
-    return this.channel.send({
+  async sendWaiter() {
+    this.response = await this.channel.send({
       embed: {
         color: constants.COLOR_WAIT,
-        title: `⌛ ${this.labels.wait}`
+        title: `⌛ ${this.texts.wait}`
       }
     });
   }
@@ -121,7 +130,7 @@ module.exports = class Poll {
   canExclusively() {
     if (!this.exclusive) return;
 
-    if (!this.permissions) throw 'unavailableExclusive';
+    if (!this.guild) throw 'unavailableExclusive';
 
     if (!this.allowManageMessages) throw 'unusableExclusive';
   }
@@ -129,44 +138,47 @@ module.exports = class Poll {
   parseArgs() {
     this.query = this.args.shift();
 
-    const parsers = {
-      poll: this.parsePoll,
-      freepoll: this.parsePoll,
-      numpoll: this.parseNumpoll
-    };
+    switch(this.name) {
+      case 'poll':
+      case 'freepoll':
+        this.options = this.parsePoll();
+        break;
 
-    this.options = parsers[this.name]();
+      case 'numpoll':
+        this.options = this.parseNumpoll();
+        break;
+    }
   }
 
   parsePoll() {
-    if (!this.args.length) return _.zipObject(['⭕', '❌'], []);
+    if (!this.args.length) return this.zipOptions(['⭕', '❌']);
 
     if (this.args.length > Poll.DEFAULT_EMOJIS.length * 2) throw 'tooManyOptions';
 
-    let [resolve, reject] = _.partition(args, arg => this.resolveEmoji(arg));
+    let [resolves, rejects] = _.partition(this.args, arg => this.resolveEmoji(arg));
 
-    if (!reject.length) {
-      if (resolve.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
-      if (resolve.length > _.uniq(resolve).length) throw 'duplicateEmojis';
+    if (!rejects.length) {
+      if (resolves.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
+      if (resolves.length > _.uniq(resolves).length) throw 'duplicateEmojis';
 
-      return _.zipObject(resolve, []);
+      return this.zipOptions(this.args, resolves);
     }
 
     let index = 0;
     const [emojis, strings] = _.partition(this.args, _ => (++index) % 2);
 
-    [resolve, reject] = _.partition(emojis, emoji => this.resolveEmoji(emoji));
+    [resolves, rejects] = _.partition(emojis, emoji => this.resolveEmoji(emoji));
 
-    if (!(this.args.length % 2) && !reject.length) {
-      if (resolve.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
-      if (resolve.length > _.uniq(resolve).length) throw 'duplicateEmojis';
+    if (emojis.length === strings.length && !rejects.length) {
+      if (resolves.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
+      if (resolves.length > _.uniq(resolves).length) throw 'duplicateEmojis';
 
-      return _.zipObject(resolve, strings);
+      return this.zipOptions(emojis, resolves, strings);
     }
 
     if (this.args.length > Poll.DEFAULT_EMOJIS.length) throw 'tooManyOptions';
 
-    return _.zipObject(Poll.DEFAULT_EMOJIS.slice(0, this.args.length), this.args);
+    return this.zipOptions(Poll.DEFAULT_EMOJIS.slice(0, this.args.length), [], this.args);
   }
 
   parseNumpoll() {
@@ -174,12 +186,18 @@ module.exports = class Poll {
 
     const number = Number(
       this.args[0].replace(/[０-９]/g, match => String.fromCharCode(match.charCodeAt() - 0xFEE0))
-    );
+      );
 
     if (number < 1) throw 'tooSmallNumber';
     if (number > Poll.NUMERICAL_EMOJIS.length) throw 'tooLargeNumber';
 
-    return _.zipObject(Poll.NUMERICAL_EMOJIS.slice(0, number), []);
+    return this.zipOptions(Poll.NUMERICAL_EMOJIS.slice(0, number));
+  }
+
+  zipOptions(emojis, reactions = [], strings = []) {
+    return _.zipWith(emojis, reactions, strings, (emoji, reaction, string) => {
+      return { emoji: emoji, reaction: reaction ?? emoji, string: string };
+    });
   }
 
   resolveEmoji(arg) {
@@ -192,10 +210,15 @@ module.exports = class Poll {
       const guildEmoji = this.bot.emojis.cache.get(guildEmojiID);
 
       if (!guildEmoji) throw 'unknownEmoji';
-      if (!guildEmoji.available) throw 'unavailableEmoji';
-      if (this.permissions && this.guild.id !== guildEmoji.guild.id && !this.allowExternalEmojis) {
+
+      if (this.guild && this.guild.id !== guildEmoji.guild.id && !this.allowExternalEmojis) {
         throw 'denyExternalEmojis';
       }
+
+      const roles = guildEmoji.roles.cache;
+      const botRoles = guildEmoji.guild.me.roles.cache;
+
+      if (roles.size && !roles.intersect(botRoles).size) throw 'unavailableEmoji';
 
       return guildEmojiID;
     }
@@ -207,5 +230,54 @@ module.exports = class Poll {
     for (const str of Object.values(this.options)) {
       if (str.length > constants.OPTION_MAX) throw 'tooLongOption';
     }
+  }
+
+  getAttachement() {
+    const attachment = this.message.attachments.first();
+
+    if (!attachment) return;
+
+    for (const extension of Poll.IMAGE_EXTENSIONS) {
+
+      if (attachment.name.endsWith(extension)) {
+        this.attachment = attachment;
+        break;
+      }
+    }
+  }
+
+  async sendPoll() {
+    await this.response.edit({
+      embed: {
+        color: this.exclusive ? constants.COLOR_EXPOLL : constants.COLOR_POLL,
+        author: {
+          iconURL: this.user.displayAvatarURL(),
+          name: this.member?.displayName ?? this.user.tag
+        },
+        title: `${this.query}\u200C`,
+        description: this.generateDescription(),
+        image: {
+          url: this.attachment ? this.attachment.name : undefined
+        },
+        footer: {
+          text: this.exclusive ? this.texts.footer.ex[this.name] : this.texts.footer[this.name]
+        }
+      },
+      files: this.attachment ? this.attachment.url : []
+    });
+  }
+
+  generateDescription() {
+    let description = _(this.options).filter(option => option.string).map(option => {
+      return `\u200B${option.emoji} ${option.string}\u200C`
+    }).join('\n');
+
+    description += `\n\n[📊](${constants.MANUAL_URL}sumpoll) \`${this.prefix}sumpoll ${this.response.id}\``;
+
+    return description;
+  }
+
+  async addReactions() {
+    
   }
 }

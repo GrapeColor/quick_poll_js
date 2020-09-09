@@ -9,6 +9,8 @@ module.exports = class CommandError {
     const infomation = locales[lang].errors.infomation;
 
     this.response = response;
+    this.exception = exception;
+
     this.title = resolveVars(error.title, vars);
     this.description = `${error.description ?? ''}\n\n${infomation}`;
     this.description = resolveVars(this.description, vars);

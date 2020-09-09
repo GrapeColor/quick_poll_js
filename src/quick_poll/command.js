@@ -157,8 +157,7 @@ module.exports = class Command {
 
     try {
       if (commandData.args.length) {
-        command = Command.commands[commandData.name](commandData);
-        this.response = await command.exec();
+        this.response = await Command.commands[commandData.name](commandData).exec();
       } else {
         this.response = await this.callHelp(commandData);
       }
@@ -166,7 +165,7 @@ module.exports = class Command {
       try {
         this.response = await this.sendError(error, commandData);
       }
-      catch { undefined; }
+      catch { return; }
     }
 
     this.message.react('↩️')
@@ -210,7 +209,10 @@ module.exports = class Command {
       embed: {
         color: constants.COLOR_ERROR,
         title: `⚠️ ${error.title}`,
-        description: error.description
+        description: error.description,
+        footer: {
+          text: error.exception.toString()
+        }
       }
     });
   }
