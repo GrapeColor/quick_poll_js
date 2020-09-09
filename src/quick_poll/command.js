@@ -3,7 +3,9 @@
 const { MessageEmbed } = require('discord.js');
 
 const constants = require('./constants');
-const { locales, varsResolve } = require('./locales');
+const { locales, resolveVars } = require('./locales');
+
+const CommandData = require('./command_data');
 
 module.exports = class Command {
   static guildPrefixes = {};
@@ -77,13 +79,10 @@ module.exports = class Command {
   }
 
   static sendHelp(message) {
-    new this().respond({
-      bot: message.client,
-      lang: this.getGuildLanguage(message.guild),
-      message: message,
-      prefix: this.getGuildPrefix(message.guild),
-      args: []
-    })
+    const lang = this.getGuildLanguage(message.guild);
+    const prefix = this.getGuildPrefix(message.guild);
+
+    new this().respond(new CommandData(message.client, lang, message, prefix))
       .catch();
   }
 
@@ -103,15 +102,9 @@ module.exports = class Command {
 
     if (!this.commands[args[0]]) return;
 
-    return {
-      bot: message.client,
-      lang: this.getGuildLanguage(message.guild),
-      message: message,
-      prefix: prefix,
-      exclusive: exclusive,
-      name: args[0],
-      args: args.slice(1)
-    };
+    const lang = this.getGuildLanguage(message.guild);
+
+    return new CommandData(message.client, lang, message, prefix, exclusive, args.shift(), args);
   }
 
   static QUOTE_PAIRS = { '“': '”', '„': '”', "‘": "’", "‚": "’" };
@@ -198,7 +191,7 @@ module.exports = class Command {
     const inviteUrl = await commandData.bot.generateInvite(constants.REQUIRED_PERMISSIONS);
 
     for (const field of help.fields) {
-      embed.addField(field.name, varsResolve(field.value, {
+      embed.addField(field.name, resolveVars(field.value, {
         PREFIX: commandData.prefix,
         INVITE_URL: inviteUrl
       }));
