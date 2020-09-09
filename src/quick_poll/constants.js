@@ -2,6 +2,10 @@
 
 const { Permissions } = require('discord.js');
 
+exports.MANUAL_URL   = process.env.MANUAL_URL;
+exports.SUPPORT_URL  = process.env.SUPPORT_URL;
+exports.DONATION_URL = process.env.DONATION_URL;
+
 exports.REQUIRED_PERMISSIONS = new Permissions(388160);
 
 exports.DEFAULT_PREFIX = '/';
