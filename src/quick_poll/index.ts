@@ -1,13 +1,18 @@
-'use strict';
+import { Client, Intents } from 'discord.js';
 
-const { Client, Intents } = require('discord.js');
+import { constants } from './constants';
 
-const constants = require('./constants');
+import Command from './command';
+import Admin from './admin';
 
-const Command = require('./command');
-const Admin = require('./admin');
+export default class QuickPoll {
+  shards: number;
+  shardCount: number;
+  bot: Client;
 
-module.exports = class QuickPoll {
+  readyCount: number;
+  updateStatusCount: number;
+
   constructor(shards = 0, shardCount = 1) {
     this.shards = shards;
     this.shardCount = shardCount;
@@ -23,7 +28,7 @@ module.exports = class QuickPoll {
 
     this.readyCount = 0;
     bot.on('shardReady', () => {
-      bot.user.setPresence({
+      bot.user?.setPresence({
         activity: { name: `再接続されました(${++this.readyCount})` },
         status: 'dnd',
         shardID: shards
@@ -36,7 +41,7 @@ module.exports = class QuickPoll {
     bot.setInterval(() => this.updateStatus(this.updateStatusCount++), 30000);
   }
 
-  login(token) {
+  login(token: string) {
     this.bot.login(token)
       .then(() => this.entryEvents())
       .catch(console.error);
@@ -47,9 +52,11 @@ module.exports = class QuickPoll {
     Command.events(this.bot);
   }
 
-  updateStatus(count) {
+  updateStatus(count: number) {
     const bot = this.bot;
     const prefix = constants.DEFAULT_PREFIX;
+
+    if (!bot.user) return;
 
     switch(count % 4) {
       case 0:
@@ -78,7 +85,7 @@ module.exports = class QuickPoll {
   }
 }
 
-const Poll = require('./commands/poll');
+import Poll from './commands/poll';
 
 Command.addEvents(Poll.events);
 

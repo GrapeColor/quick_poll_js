@@ -1,9 +1,9 @@
-'use strict';
+import { Client, DMChannel } from 'discord.js';
 
-module.exports = class Admin {
-  static events(bot) {
-    const adminIDs = process.env.ADMIN_USER_IDS.split(',');
-    const evalRegex = new RegExp(`^<@!?${bot.user.id}> admin\\n\`\`\`\\n(.+)\\n\`\`\``, 's');
+export default class Admin {
+  static events(bot: Client) {
+    const adminIDs = String(process.env.ADMIN_USER_IDS).split(',');
+    const evalRegex = /^admin\s```\n?(.+)\n?```/s;
 
     bot.on('message', message => {
       if (message.channel.type !== 'dm') return;
@@ -16,7 +16,7 @@ module.exports = class Admin {
     });
   }
 
-  static execute(channel, code) {
+  static execute(channel: DMChannel, code: string) {
     const bot = channel.client;
     let result = '';
 
@@ -29,7 +29,7 @@ module.exports = class Admin {
     });
   }
 
-  static split(content, limit) {
+  static split(content: string, limit: number) {
     const contents = [];
     let part = '```';
 

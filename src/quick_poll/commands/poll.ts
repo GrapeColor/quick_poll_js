@@ -1,20 +1,21 @@
-'use strict';
+import Discord from 'discord.js';
 
-const _ = require('lodash');
+import _ from 'lodash';
 
-const twemojiRegex = require('twemoji-parser/dist/lib/regex').default;
+const twemojiRegex: RegExp = require('twemoji-parser/dist/lib/regex').default;
 
-const constants = require('../constants');
+import { constants } from '../constants';
+import { locales } from '../locales';
 
-const CommandError = require('../error');
-const { locales } = require('../locales');
+import CommandData from '../command_data';
+import CommandError from '../error';
 
-module.exports = class Poll {
-  static events(bot) {
+export default class Poll {
+  static events(bot: Discord.Client) {
     bot.on('messageReactionAdd', (reaction, user) => Poll.excludeReaction(reaction, user));
   }
 
-  static async excludeReaction(reaction, user) {
+  static async excludeReaction(reaction: Discord.MessageReaction, user: Discord.User | Discord.PartialUser) {
     const botUser = user.client.user;
     const channel = reaction.message.channel;
 
@@ -24,7 +25,7 @@ module.exports = class Poll {
     const pollEmbed = message.embeds[0];
     const pollColor = pollEmbed?.color;
 
-    if (!message.author.id === botUser.id
+    if (message.author.id !== botUser?.id
       || pollColor !== constants.COLOR_POLL && pollColor !== constants.COLOR_EXPOLL) {
       channel.messages.cache.delete(message.id);
       return;
@@ -36,13 +37,13 @@ module.exports = class Poll {
 
     if (partial) {
       reactions.add(reaction);
-      reactions.cache.get(emoji.id ?? emoji.name).users.add(user);
+      reactions.cache.get(emoji.id ?? emoji.name)?.users.add(user);
     }
 
     const myReactions = reactions.cache.filter(reaction => reaction.me);
 
-    if (myReactions.length && !reaction.me) {
-      reactions.get(emoji.id ?? emoji.name).users.remove(user)
+    if (myReactions.size && !reaction.me) {
+      reactions.cache.get(emoji.id ?? emoji.name)?.users.remove(user.id)
         .catch();
       return;
     }
@@ -52,15 +53,15 @@ module.exports = class Poll {
     for (const reaction of myReactions.array()) {
       if (!partial && !reaction.users.cache.has(user.id) || reaction.emoji.name === emoji.name) continue;
 
-      reaction.users.remove(user)
+      reaction.users.remove(user.id)
         .catch();
     }
   }
 
   static commands = {
-    poll: commandData => new this(commandData),
-    freepoll: commandData => new this(commandData),
-    numpoll: commandData => new this(commandData)
+    poll: (commandData: CommandData) => new Poll(commandData),
+    freepoll: (commandData: CommandData) => new Poll(commandData),
+    numpoll: (commandData: CommandData) => new Poll(commandData)
   };
 
   static emojiRegex = new RegExp(`^(${twemojiRegex.toString().slice(1, -2)})$`);
@@ -73,7 +74,32 @@ module.exports = class Poll {
 
   static IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
 
-  constructor(commandData) {
+  bot: Discord.Client;
+  lang: string;
+  message: Discord.Message;
+  prefix: string;
+  exclusive: boolean;
+  name: string;
+  args: string[];
+
+  texts: { [key: string]: any };
+
+  user: Discord.User;
+  channel: Discord.TextChannel | Discord.DMChannel | Discord.NewsChannel;
+  guild: Discord.Guild | undefined;
+
+  member: Discord.GuildMember | null | undefined;
+  permissions: Readonly<Discord.Permissions> | null | undefined;
+  allowManageMessages: boolean | undefined;
+  allowExternalEmojis: boolean | undefined;
+
+  response: Discord.Message | undefined;
+
+  query: string;
+  options: Array<{ [key: string]: string }>;
+  attachment: Discord.MessageAttachment | undefined;
+
+  constructor(commandData: CommandData) {
     this.bot = commandData.bot;
     this.lang = commandData.lang;
     this.message = commandData.message;
@@ -86,14 +112,17 @@ module.exports = class Poll {
 
     this.user = this.message.author;
     this.channel = this.message.channel;
-    this.guild = this.channel.guild;
+    if (this.channel.type !== 'dm') this.guild = this.channel.guild;
 
-    if (this.guild) {
-      this.member = this.guild.members.resolve(this.user);
-      this.permissions = this.channel.permissionsFor(this.bot.user);
-      this.allowManageMessages = this.permissions.has('MANAGE_MESSAGES');
-      this.allowExternalEmojis = this.permissions.has('USE_EXTERNAL_EMOJIS');
+    if (this.channel.type !== 'dm') {
+      this.member = this.guild?.members.resolve(this.user);
+      if (this.bot.user) this.permissions = this.channel.permissionsFor(this.bot.user);
+      this.allowManageMessages = this.permissions?.has('MANAGE_MESSAGES');
+      this.allowExternalEmojis = this.permissions?.has('USE_EXTERNAL_EMOJIS');
     }
+
+    this.query = '';
+    this.options = [];
   }
 
   async exec() {
@@ -136,7 +165,7 @@ module.exports = class Poll {
   }
 
   parseArgs() {
-    this.query = this.args.shift();
+    this.query = this.args.shift() ?? '';
 
     switch(this.name) {
       case 'poll':
@@ -185,7 +214,7 @@ module.exports = class Poll {
     if (!this.args.length) throw 'unspecifiedNumber';
 
     const number = Number(
-      this.args[0].replace(/[０-９]/g, match => String.fromCharCode(match.charCodeAt() - 0xFEE0))
+      this.args[0].replace(/[０-９]/g, match => String.fromCharCode(match.charCodeAt(0) - 0xFEE0))
       );
 
     if (number < 1) throw 'tooSmallNumber';
@@ -194,13 +223,13 @@ module.exports = class Poll {
     return this.zipOptions(Poll.NUMERICAL_EMOJIS.slice(0, number));
   }
 
-  zipOptions(emojis, reactions = [], strings = []) {
+  zipOptions(emojis: string[], reactions: string[] = [], strings: string[] = []) {
     return _.zipWith(emojis, reactions, strings, (emoji, reaction, string) => {
       return { emoji: emoji, reaction: reaction ?? emoji, string: string };
     });
   }
 
-  resolveEmoji(arg) {
+  resolveEmoji(arg: string) {
     if (Poll.emojiRegex.test(arg)) return arg;
 
     const matchGuildEmoji = arg.match(Poll.guildEmojiRegex);
@@ -216,9 +245,9 @@ module.exports = class Poll {
       }
 
       const roles = guildEmoji.roles.cache;
-      const botRoles = guildEmoji.guild.me.roles.cache;
+      const botRoles = guildEmoji.guild.me?.roles.cache;
 
-      if (roles.size && !roles.intersect(botRoles).size) throw 'unavailableEmoji';
+      if (roles.size && botRoles?.size && !roles.intersect(botRoles).size) throw 'unavailableEmoji';
 
       return guildEmojiID;
     }
@@ -239,7 +268,7 @@ module.exports = class Poll {
 
     for (const extension of Poll.IMAGE_EXTENSIONS) {
 
-      if (attachment.name.endsWith(extension)) {
+      if (attachment.name?.endsWith(extension)) {
         this.attachment = attachment;
         break;
       }
@@ -247,7 +276,7 @@ module.exports = class Poll {
   }
 
   async sendPoll() {
-    await this.response.edit({
+    await this.response?.edit({
       embed: {
         color: this.exclusive ? constants.COLOR_EXPOLL : constants.COLOR_POLL,
         author: {
@@ -268,16 +297,18 @@ module.exports = class Poll {
   }
 
   generateDescription() {
-    let description = _(this.options).filter(option => option.string).map(option => {
+    let description = _(this.options).filter(option => !!option.string).map(option => {
       return `\u200B${option.emoji} ${option.string}\u200C`
     }).join('\n');
 
-    description += `\n\n[📊](${constants.MANUAL_URL}sumpoll) \`${this.prefix}sumpoll ${this.response.id}\``;
+    description += `\n\n[📊](${constants.MANUAL_URL}sumpoll) \`${this.prefix}sumpoll ${this.response?.id}\``;
 
     return description;
   }
 
   async addReactions() {
-    
+    for (const option of this.options) {
+      
+    }
   }
 }

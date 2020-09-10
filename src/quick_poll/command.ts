@@ -1,17 +1,15 @@
-'use strict';
+import { Client, Guild, Message, MessageEmbed } from 'discord.js';
 
-const { MessageEmbed } = require('discord.js');
+import { constants } from './constants';
+import { locales, resolveVars } from './locales';
 
-const constants = require('./constants');
-const { locales, resolveVars } = require('./locales');
+import CommandData from './command_data';
+import CommandError from './error';
 
-const CommandData = require('./command_data');
+export default class Command {
+  static queues: { [key: string]: Command } = {};
 
-module.exports = class Command {
-  static guildPrefixes = {};
-  static guildLocales = {};
-
-  static events(bot) {
+  static events(bot: Client) {
     bot.once('ready', () => {
       bot.guilds.cache.each(guild => this.updateNick(guild));
     });
@@ -26,19 +24,21 @@ module.exports = class Command {
         return;
       }
 
-      const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
+      const matchMention = message.content.match(new RegExp(`^<@!?${bot.user?.id}>$`));
+
       if (matchMention) {
         this.sendHelp(message);
         return;
       }
 
       const commandData = this.parse(message);
+
       if (!commandData) {
         message.channel.messages.cache.delete(message.id);
         return;
       }
 
-      new this().respond(commandData)
+      new this(commandData).respond()
         .catch();
     });
 
@@ -61,32 +61,40 @@ module.exports = class Command {
     for (const events of this.commandEvents) events(bot);
   }
 
-  static updateNick(guild) {
-    const matchPrefix = guild.me.nickname?.match(/\[([!-~]{1,4}?)\]/);
-    const matchLocale = guild.me.nickname?.match(/<(\w{2})>/);
+  static guildPrefixes: { [key: string]: string } = {};
+  static guildLocales: { [key: string]: string } = {};
+
+  static updateNick(guild: Guild) {
+    const matchPrefix = guild.me?.nickname?.match(/\[([!-~]{1,4}?)\]/);
+    const matchLocale = guild.me?.nickname?.match(/<(\w{2})>/);
 
     this.guildPrefixes[guild.id] = matchPrefix ? matchPrefix[1] : constants.DEFAULT_PREFIX;
 
     if (matchLocale && locales[matchLocale[1]]) this.guildLocales[guild.id] = matchLocale[1];
   }
 
-  static getGuildPrefix(guild) {
-    return this.guildPrefixes[guild?.id] ?? constants.DEFAULT_PREFIX;
+  static getGuildPrefix(guild: Guild | null) {
+    return this.guildPrefixes[guild?.id ?? constants.DEFAULT_PREFIX];
   }
 
-  static getGuildLanguage(guild) {
-    return this.guildLocales[guild?.id] ?? constants.DEFAULT_LOCALE;
+  static getGuildLanguage(guild: Guild | null) {
+    return this.guildLocales[guild?.id ?? constants.DEFAULT_PREFIX];
   }
 
-  static sendHelp(message) {
+  static sendHelp(message: Message) {
     const lang = this.getGuildLanguage(message.guild);
     const prefix = this.getGuildPrefix(message.guild);
 
-    new this().respond(new CommandData(message.client, lang, message, prefix))
+    const commandData: CommandData = {
+      bot: message.client, lang: lang, message: message, prefix: prefix,
+      exclusive: false, name: '', args: []
+    };
+
+    new this(commandData).respond()
       .catch();
   }
 
-  static parse(message) {
+  static parse(message: Message) {
     const prefix = this.getGuildPrefix(message.guild);
     const content = message.content;
 
@@ -102,14 +110,22 @@ module.exports = class Command {
 
     if (!this.commands[args[0]]) return;
 
-    const lang = this.getGuildLanguage(message.guild);
+    const commandData: CommandData = {
+      bot: message.client,
+      lang: this.getGuildLanguage(message.guild),
+      message: message,
+      prefix: prefix,
+      exclusive: exclusive,
+      name: args[0],
+      args: args.slice(1)
+    }
 
-    return new CommandData(message.client, lang, message, prefix, exclusive, args.shift(), args);
+    return commandData;
   }
 
-  static QUOTE_PAIRS = { '“': '”', '„': '”', "‘": "’", "‚": "’" };
+  static QUOTE_PAIRS: { [key: string]: string } = { '“': '”', '„': '”', "‘": "’", "‚": "’" };
 
-  static parseString(string, args = []) {
+  static parseString(string: String, args: string[] = []) {
     let arg = '', quote = '', escape = false;
 
     for (const char of [...string]) {
@@ -141,29 +157,36 @@ module.exports = class Command {
     return args;
   }
 
-  static commandEvents = [];
+  static commandEvents: Function[] = [];
 
-  static addEvents(events) { this.commandEvents.push(events); }
+  static addEvents(events: (bot: Client) => void) { this.commandEvents.push(events); }
 
-  static commands = {};
+  static commands: { [key: string]: Function } = {};
 
-  static addCommands(commands) { Object.assign(this.commands, commands); }
+  static addCommands(commands: { [key: string]: (commandData: CommandData) => any }) { Object.assign(this.commands, commands); }
 
-  static queues = {};
+  commandData: CommandData;
+  bot: Client;
+  message: Message;
+  response: Message | undefined;
+  timeout: NodeJS.Timeout | undefined;
 
-  async respond(commandData) {
+  constructor(commandData: CommandData) {
+    this.commandData = commandData;
     this.bot = commandData.bot;
     this.message = commandData.message;
+  }
 
+  async respond() {
     try {
-      if (commandData.args.length) {
-        this.response = await Command.commands[commandData.name](commandData).exec();
+      if (this.commandData.args.length) {
+        this.response = await Command.commands[this.commandData.name](this.commandData).exec();
       } else {
-        this.response = await this.callHelp(commandData);
+        this.response = await this.callHelp();
       }
     } catch(error) {
       try {
-        this.response = await this.sendError(error, commandData);
+        this.response = await this.sendError(error);
       }
       catch { return; }
     }
@@ -171,14 +194,14 @@ module.exports = class Command {
     this.message.react('↩️')
       .then(() => {
         Command.queues[this.message.id] = this;
-        this.timeout = setTimeout(() => this.clearQueue(), constants.QUEUE_TIMEOUT);
+        this.timeout = this.bot.setTimeout(() => this.clearQueue(), constants.QUEUE_TIMEOUT);
       })
       .catch();
   }
 
-  async callHelp(commandData) {
-    const channel = commandData.message.channel;
-    const help = locales[commandData.lang].help;
+  async callHelp() {
+    const channel = this.message.channel;
+    const help = locales[this.commandData.lang].help;
 
     const embed = new MessageEmbed({
       color: constants.COLOR_HELP,
@@ -187,11 +210,11 @@ module.exports = class Command {
       description: help.description
     });
 
-    const inviteUrl = await commandData.bot.generateInvite(constants.REQUIRED_PERMISSIONS);
+    const inviteUrl = await this.bot.generateInvite(constants.REQUIRED_PERMISSIONS);
 
     for (const field of help.fields) {
       embed.addField(field.name, resolveVars(field.value, {
-        PREFIX: commandData.prefix,
+        PREFIX: this.commandData.prefix,
         INVITE_URL: inviteUrl
       }));
     }
@@ -199,13 +222,16 @@ module.exports = class Command {
     return channel.send({ embed: embed });
   }
 
-  sendError(error, commandData) {
+  sendError(error: CommandError) {
     error.response?.delete()
       .catch();
 
-    if (!error.title) return console.error(error);
+    if (!error.title) {
+      console.error(error);
+      return;
+    }
 
-    return commandData.message.channel.send({
+    return this.commandData.message.channel.send({
       embed: {
         color: constants.COLOR_ERROR,
         title: `⚠️ ${error.title}`,
@@ -218,15 +244,15 @@ module.exports = class Command {
   }
 
   cancel() {
-    clearTimeout(this.timeout);
+    if (this.timeout) this.bot.clearTimeout(this.timeout);
     this.clearQueue();
 
-    this.response.delete()
+    this.response?.delete()
       .catch();
   }
 
   clearQueue() {
-    this.message.reactions.cache.get('↩️').users.remove(this.bot.user)
+    this.message.reactions.cache.get('↩️')?.users.remove(this.bot.user?.id)
       .catch();
 
     delete Command.queues[this.message.id];

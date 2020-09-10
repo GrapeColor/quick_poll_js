@@ -1,9 +1,14 @@
-'use strict';
+import { Message } from 'discord.js';
 
-const { locales, resolveVars } = require('./locales');
+import { locales, resolveVars } from './locales';
 
-module.exports = class CommandError {
-  constructor(response, exception, lang, vars = {}) {
+export default class CommandError {
+  response: Message | undefined;
+  exception: any;
+  title: String;
+  description: string;
+
+  constructor(response: Message | undefined, exception: any, lang: string, vars = {}) {
     const errors = locales[lang].errors;
     const error = typeof exception === 'string' && errors.poll[exception] || errors.unexpect;
     const infomation = locales[lang].errors.infomation;

@@ -4,18 +4,24 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "node src/main.js",
-    "dev": "node -r dotenv/config src/main.js 0 1",
+    "start": "ts-node src/main.js",
+    "dev": "ts-node --files -r dotenv/config src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "GrapeColor",
   "license": "MIT",
   "dependencies": {
+    "@types/js-yaml": "^3.12.5",
+    "@types/lodash": "^4.14.161",
+    "@types/node": "^14.6.4",
+    "@types/twemoji-parser": "^12.1.0",
     "discord.js": "^12.3.1",
     "dotenv": "^8.2.0",
     "js-yaml": "^3.14.0",
     "lodash": "^4.17.20",
-    "twemoji-parser": "^13.0.0"
+    "ts-node": "^9.0.0",
+    "twemoji-parser": "^13.0.0",
+    "typescript": "^4.0.2"
   }
 }
