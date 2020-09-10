@@ -96,7 +96,7 @@ export default class Poll {
   response: Discord.Message | undefined;
 
   query: string;
-  options: Array<{ [key: string]: string }>;
+  options: { emoji: string, reaction: string, string: string }[];
   attachment: Discord.MessageAttachment | undefined;
 
   constructor(commandData: CommandData) {
@@ -225,7 +225,7 @@ export default class Poll {
 
   zipOptions(emojis: string[], reactions: string[] = [], strings: string[] = []) {
     return _.zipWith(emojis, reactions, strings, (emoji, reaction, string) => {
-      return { emoji: emoji, reaction: reaction ?? emoji, string: string };
+      return { emoji: emoji, reaction: reaction ?? emoji, string: string ?? '' };
     });
   }
 
@@ -256,8 +256,8 @@ export default class Poll {
   optionsValidation() {
     if (this.query.length > constants.QUERY_MAX) throw 'tooLongQuery';
 
-    for (const str of Object.values(this.options)) {
-      if (str.length > constants.OPTION_MAX) throw 'tooLongOption';
+    for (const option of this.options) {
+      if (option.string.length > constants.OPTION_MAX) throw 'tooLongOption';
     }
   }
 
@@ -297,7 +297,7 @@ export default class Poll {
   }
 
   generateDescription() {
-    let description = _(this.options).filter(option => !!option.string).map(option => {
+    let description = _(this.options).filter(option => !!option.string.length).map(option => {
       return `\u200B${option.emoji} ${option.string}\u200C`
     }).join('\n');
 
@@ -307,8 +307,12 @@ export default class Poll {
   }
 
   async addReactions() {
-    for (const option of this.options) {
-      
+    try {
+      for (const option of this.options) {
+        await this.response?.react(option.reaction);
+      }
+    } catch {
+      throw 'cannotReact';
     }
   }
 }

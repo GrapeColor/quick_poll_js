@@ -74,11 +74,13 @@ export default class Command {
   }
 
   static getGuildPrefix(guild: Guild | null) {
-    return this.guildPrefixes[guild?.id ?? constants.DEFAULT_PREFIX];
+    if (!guild) return constants.DEFAULT_PREFIX;
+    return this.guildPrefixes[guild.id] ?? constants.DEFAULT_PREFIX;
   }
 
   static getGuildLanguage(guild: Guild | null) {
-    return this.guildLocales[guild?.id ?? constants.DEFAULT_PREFIX];
+    if (!guild) return constants.DEFAULT_LOCALE;
+    return this.guildLocales[guild.id] ?? constants.DEFAULT_LOCALE;
   }
 
   static sendHelp(message: Message) {

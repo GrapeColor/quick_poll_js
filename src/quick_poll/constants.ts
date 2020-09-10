@@ -1,6 +1,29 @@
 import { Permissions } from 'discord.js';
 
-export const constants: { [key: string]: any } = {
+interface ConstantStruct {
+  MANUAL_URL: string;
+  SUPPORT_URL: string;
+  DONATION_URL: string;
+
+  REQUIRED_PERMISSIONS: Permissions;
+
+  DEFAULT_PREFIX: string;
+  DEFAULT_LOCALE: string;
+
+  QUEUE_TIMEOUT: number;
+
+  COLOR_POLL: number;
+  COLOR_EXPOLL: number;
+  COLOR_RESULT: number;
+  COLOR_WAIT: number;
+  COLOR_ERROR: number;
+  COLOR_HELP: number;
+
+  QUERY_MAX: number;
+  OPTION_MAX: number;
+}
+
+export const constants: ConstantStruct = {
   MANUAL_URL: String(process.env.MANUAL_URL),
   SUPPORT_URL: String(process.env.SUPPORT_URL),
   DONATION_URL: String(process.env.DONATION_URL),

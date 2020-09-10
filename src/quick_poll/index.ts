@@ -22,7 +22,7 @@ export default class QuickPoll {
       shardCount: shardCount,
       ws: { intents: Intents.NON_PRIVILEGED },
       partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'],
-      restTimeOffset: 200,
+      restTimeOffset: 100,
       messageCacheMaxSize: 1000
     });
 

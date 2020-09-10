@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "ts-node src/main.js",
-    "dev": "ts-node --files -r dotenv/config src/main.ts",
+    "dev": "ts-node --files -r dotenv/config src/main.ts 0 1",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
