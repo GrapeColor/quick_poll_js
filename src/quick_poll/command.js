@@ -1,13 +1,11 @@
-'use strict';
+import { MessageEmbed } from 'discord.js';
 
-const { MessageEmbed } = require('discord.js');
+import constants from './constants.js';
+import { locales, resolveVars } from './locales.js';
 
-const constants = require('./constants');
-const { locales, resolveVars } = require('./locales');
+import CommandData from './command_data.js';
 
-const CommandData = require('./command_data');
-
-module.exports = class Command {
+export default class Command {
   static guildPrefixes = {};
   static guildLocales = {};
 

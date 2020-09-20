@@ -1,6 +1,4 @@
-'use strict';
-
-module.exports = class Admin {
+export default class Admin {
   static events(bot) {
     const adminIDs = process.env.ADMIN_USER_IDS.split(',');
     const evalRegex = new RegExp(`^<@!?${bot.user.id}> admin\\n\`\`\`\\n(.+)\\n\`\`\``, 's');

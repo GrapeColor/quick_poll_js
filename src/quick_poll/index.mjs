@@ -1,13 +1,11 @@
-'use strict';
+import { Client, Intents } from 'discord.js';
 
-const { Client, Intents } = require('discord.js');
+import constants from './constants.js';
 
-const constants = require('./constants');
+import Command from './command.js';
+import Admin from './admin.js';
 
-const Command = require('./command');
-const Admin = require('./admin');
-
-module.exports = class QuickPoll {
+export default class QuickPoll {
   constructor(shards = 0, shardCount = 1) {
     this.shards = shards;
     this.shardCount = shardCount;

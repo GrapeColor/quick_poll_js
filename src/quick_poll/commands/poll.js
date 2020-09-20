@@ -1,15 +1,13 @@
-'use strict';
+import _ from 'lodash';
 
-const _ = require('lodash');
+const twemojiRegex = require('twemoji-parser/dist/lib/regex.js').default;
 
-const twemojiRegex = require('twemoji-parser/dist/lib/regex').default;
+import constants from '../constants.js';
 
-const constants = require('../constants');
+import CommandError from '../error.js';
+import { locales } from '../locale.jss';
 
-const CommandError = require('../error');
-const { locales } = require('../locales');
-
-module.exports = class Poll {
+export default class Poll {
   static events(bot) {
     bot.on('messageReactionAdd', (reaction, user) => Poll.excludeReaction(reaction, user));
   }

@@ -1,6 +1,4 @@
-'use strict';
-
-module.exports = class CommandData {
+export default class CommandData {
   constructor(bot, lang, message, prefix, exclusive = undefined, name = undefined, args = []) {
     this.bot = bot;
     this.lang = lang;

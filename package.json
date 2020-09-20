@@ -1,8 +1,12 @@
 {
+  "engines": {
+    "node": "14.4.0"
+  },
   "name": "quick_poll",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "start": "node src/main.js",
     "dev": "node -r dotenv/config src/main.js 0 1",

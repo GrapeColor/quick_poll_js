@@ -1,9 +1,7 @@
-'use strict';
+import fs from'fs';
+import yaml from 'js-yaml';
 
-const fs = require('fs');
-const yaml = require('js-yaml');
-
-const constants = require('./constants');
+import constants from './constants.js';
 
 const replacer = (match, key, vars = constants) => { return vars[key] ?? match; }
 

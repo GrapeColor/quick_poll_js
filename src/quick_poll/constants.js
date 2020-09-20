@@ -1,6 +1,4 @@
-'use strict';
-
-const { Permissions } = require('discord.js');
+import { Permissions } from 'discord.js';
 
 exports.MANUAL_URL   = process.env.MANUAL_URL;
 exports.SUPPORT_URL  = process.env.SUPPORT_URL;

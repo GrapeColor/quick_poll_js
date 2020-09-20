@@ -1,8 +1,6 @@
-'use strict';
+import { locales, resolveVars } from './locales.js';
 
-const { locales, resolveVars } = require('./locales');
-
-module.exports = class CommandError {
+export default class CommandError {
   constructor(response, exception, lang, vars = {}) {
     const errors = locales[lang].errors;
     const error = typeof exception === 'string' && errors.poll[exception] || errors.unexpect;
