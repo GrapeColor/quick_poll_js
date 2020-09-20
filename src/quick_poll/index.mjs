@@ -1,6 +1,6 @@
 import { Client, Intents } from 'discord.js';
 
-import constants from './constants.js';
+import { constants } from './constants.js';
 
 import Command from './command.js';
 import Admin from './admin.js';
@@ -76,7 +76,7 @@ export default class QuickPoll {
   }
 }
 
-const Poll = require('./commands/poll');
+import Poll from './commands/poll.js';
 
 Command.addEvents(Poll.events);
 

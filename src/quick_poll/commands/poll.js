@@ -1,11 +1,11 @@
 import _ from 'lodash';
 
-const twemojiRegex = require('twemoji-parser/dist/lib/regex.js').default;
+import twemojiRegex from 'twemoji-parser/dist/lib/regex.js';
 
-import constants from '../constants.js';
+import { constants } from '../constants.js';
 
 import CommandError from '../error.js';
-import { locales } from '../locale.jss';
+import { locales } from '../locales.js';
 
 export default class Poll {
   static events(bot) {

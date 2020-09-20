@@ -1,6 +1,6 @@
 import { MessageEmbed } from 'discord.js';
 
-import constants from './constants.js';
+import { constants } from './constants.js';
 import { locales, resolveVars } from './locales.js';
 
 import CommandData from './command_data.js';
