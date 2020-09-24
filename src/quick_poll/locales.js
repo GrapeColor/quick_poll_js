@@ -2,9 +2,15 @@ import path from 'path';
 import fs from'fs';
 import yaml from 'js-yaml';
 
-import { constants } from './constants.js';
+import { CONST } from './const.js';
 
-const replacer = (match, key, vars = constants) => { return vars[key] ?? match; }
+/**
+ * Replace variables.
+ * @param {string} match 
+ * @param {string} key 
+ * @param {Object.<string, string>} vars 
+ */
+const replacer = (match, key, vars = CONST) => vars[key] ?? match;
 
 const localesData = () => {
   let data = fs.readFileSync(
@@ -18,6 +24,11 @@ const localesData = () => {
 
 export const locales = localesData();
 
+/**
+ * Resolve the variable later.
+ * @param {string} string 
+ * @param {Object.<string, string>} vars 
+ */
 export const resolveVars = (string, vars = {}) => {
   return string.replace(/\$\{(\w+)\}/g, (match, key) => replacer(match, key, vars));
 }

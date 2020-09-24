@@ -1,8 +1,8 @@
 import { Client, Intents } from 'discord.js';
 
-import { constants } from './constants.js';
+import { CONST } from './const.js';
 
-import Command from './command.js';
+import CommandManager from "./command/CommandManager";
 import Admin from './admin.js';
 
 export default class QuickPoll {
@@ -20,6 +20,7 @@ export default class QuickPoll {
     });
 
     this.readyCount = 0;
+
     bot.on('shardReady', () => {
       bot.user.setPresence({
         activity: { name: `再接続されました(${++this.readyCount})` },
@@ -31,6 +32,7 @@ export default class QuickPoll {
     });
 
     this.updateStatusCount = 0;
+
     bot.setInterval(() => this.updateStatus(this.updateStatusCount++), 30000);
   }
 
@@ -42,12 +44,12 @@ export default class QuickPoll {
 
   entryEvents() {
     Admin.events(this.bot);
-    Command.events(this.bot);
+    CommandManager.events(this.bot);
   }
 
   updateStatus(count) {
     const bot = this.bot;
-    const prefix = constants.DEFAULT_PREFIX;
+    const prefix = CONST.DEFAULT_PREFIX;
 
     switch(count % 4) {
       case 0:
@@ -76,8 +78,8 @@ export default class QuickPoll {
   }
 }
 
-import Poll from './commands/poll.js';
+import Poll from './command/Poll.js';
 
-Command.addEvents(Poll.events);
+CommandManager.addEvents(Poll.events);
 
-Command.addCommands(Poll.commands);
+CommandManager.addCommands(Poll.commands);
