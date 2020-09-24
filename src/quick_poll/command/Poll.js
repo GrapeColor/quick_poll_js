@@ -1,4 +1,4 @@
-import _, { extend } from 'lodash';
+import _ from 'lodash';
 import Discord from 'discord.js';
 
 import twemojiRegex from 'twemoji-parser/dist/lib/regex.js';

@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
 
-import CommandData from './CommandData';
+import CommandData from './CommandData.js';
 import CommandError from './CommandError.js';
 
 export default class Command {

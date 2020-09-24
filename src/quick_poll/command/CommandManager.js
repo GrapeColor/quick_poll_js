@@ -40,7 +40,7 @@ export default class CommandManager {
         return;
       }
 
-      new Command(commandData);
+      new CommandManager(commandData);
     });
 
     bot.on('messageReactionAdd', async (reaction, user) => {
@@ -76,7 +76,8 @@ export default class CommandManager {
     const matchPrefix = guild.me.nickname?.match(/\[([!-~]{1,4}?)\]/);
     const matchLocale = guild.me.nickname?.match(/<(\w{2})>/);
 
-    this.guildPrefixes[guild.id] = matchPrefix ? matchPrefix[1] : CONST.DEFAULT_PREFIX;
+    this.guildPrefixes[guild.id]
+      = matchPrefix ? matchPrefix[1] : CONST.DEFAULT_PREFIX;
 
     if (matchLocale && locales[matchLocale[1]])
       this.guildLocales[guild.id] = matchLocale[1];
@@ -106,7 +107,7 @@ export default class CommandManager {
     const lang = this.getGuildLanguage(message.guild);
     const prefix = this.getGuildPrefix(message.guild);
 
-    new Command(new CommandData(message.client, lang, message, prefix));
+    new CommandManager(new CommandData(message.client, lang, message, prefix));
   }
 
   /**
@@ -208,9 +209,11 @@ export default class CommandManager {
     this.bot = commandData.bot;
     this.message = commandData.message;
 
-    (commandData.args.length
+    const responser = commandData.args.length
       ? CommandManager.commands[commandData.name](commandData).exec()
-      : this.callHelp(commandData))
+      : this.callHelp(commandData);
+
+    responser
       .then(response => {
         this.response = response;
 

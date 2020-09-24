@@ -11,7 +11,7 @@ export default class CommandData {
    * @param {string} name Command name.
    * @param {string[]} args Command arguments.
    */
-  constructor(bot, lang, message, prefix, exclusive = undefined, name = undefined, args = []) {
+  constructor(bot, lang, message, prefix, exclusive = false, name = '', args = []) {
     this.bot = bot;
     this.lang = lang;
     this.message = message;

@@ -2,7 +2,7 @@ import { Client, Intents } from 'discord.js';
 
 import { CONST } from './const.js';
 
-import CommandManager from "./command/CommandManager";
+import CommandManager from "./command/CommandManager.js";
 import Admin from './admin.js';
 
 export default class QuickPoll {
