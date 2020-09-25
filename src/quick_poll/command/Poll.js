@@ -51,23 +51,23 @@ export default class Poll extends Command {
       reactions.cache.get(emoji.id ?? emoji.name).users.add(user);
     }
 
-    const myReactions = reactions.cache.filter(reaction => reaction.me);
+    const botReactions = reactions.cache.filter(reaction => reaction.me);
 
-    if (myReactions.length && !reaction.me) {
-      reactions.get(emoji.id ?? emoji.name).users.remove(user)
-        .catch();
+    if (botReactions.size && !reaction.me) {
+      reactions.cache.get(emoji.id ?? emoji.name).users.remove(user)
+        .catch(undefined);
       return;
     }
 
     if (pollColor !== CONST.COLOR_EXPOLL) return;
 
-    for (const reaction of myReactions.array()) {
+    for (const reaction of botReactions.array()) {
       if (!partial
         && !reaction.users.cache.has(user.id)
         || reaction.emoji.name === emoji.name) continue;
 
-      reaction.users.remove(user)
-        .catch();
+      try { await reaction.users.remove(user); }
+      catch { undefined; }
     }
   }
 
@@ -273,7 +273,7 @@ export default class Poll extends Command {
         .join('\n');
 
     list += `\n\n[📊](${CONST.MANUAL_URL}sumpoll) `
-      + `\`${this.prefix}sumpoll ${this.response.id}\``;
+      + `\`${this.prefix}sumpoll ${this.channel.id}-${this.response.id}\``;
 
     return list;
   }
