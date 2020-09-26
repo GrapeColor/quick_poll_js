@@ -36,7 +36,7 @@ export const CONST = {
   DEFAULT_PREFIX: '/',
   DEFAULT_LOCALE: 'ja',
 
-  QUEUE_TIMEOUT: 60000,
+  QUEUE_TIMEOUT: 3 * 60 * 1000,
 
   COLOR_POLL:   0x3b88c3,
   COLOR_EXPOLL: 0x3b88c4,

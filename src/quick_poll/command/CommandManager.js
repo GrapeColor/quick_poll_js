@@ -247,7 +247,8 @@ export default class CommandManager {
       description: help.description
     });
 
-    const inviteUrl = await commandData.bot.generateInvite(CONST.REQUIRED_PERMISSIONS);
+    const inviteUrl
+      = await commandData.bot.generateInvite(CONST.REQUIRED_PERMISSIONS);
 
     for (const field of help.fields) {
       embed.addField(field.name, resolveVars(field.value, {

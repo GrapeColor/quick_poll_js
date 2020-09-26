@@ -15,9 +15,8 @@ export default class Poll extends Command {
    * @param {Discord.Client} bot 
    */
   static events(bot) {
-    bot.on('messageReactionAdd', (reaction, user) => {
-      Poll.excludeReaction(reaction, user);
-    });
+    bot.on('messageReactionAdd', (reaction, user) =>
+      Poll.excludeReaction(reaction, user));
   }
 
   /**
@@ -62,12 +61,18 @@ export default class Poll extends Command {
     if (pollColor !== CONST.COLOR_EXPOLL) return;
 
     for (const reaction of botReactions.array()) {
-      if (!partial
-        && !reaction.users.cache.has(user.id)
-        || reaction.emoji.name === emoji.name) continue;
+      const shouldDelete
+        = reaction.users.cache.has(user.id) && reaction.emoji.name !== emoji.name;
 
-      try { await reaction.users.remove(user); }
-      catch { undefined; }
+      if (partial) {
+        if (shouldDelete)
+          try { await reaction.users.remove(user); }
+          catch { undefined; }
+      } else {
+        if (shouldDelete)
+          reaction.users.remove(user)
+            .catch(undefined);
+      }
     }
   }
 
