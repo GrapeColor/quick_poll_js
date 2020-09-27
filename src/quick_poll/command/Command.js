@@ -1,6 +1,4 @@
-import Discord from 'discord.js';
-
-import CommandData from './CommandData.js';
+import { CommandData } from './CommandManager.js';
 import CommandError from './CommandError.js';
 
 export default class Command {
@@ -16,6 +14,9 @@ export default class Command {
     this.exclusive = commandData.exclusive;
     this.name = commandData.name;
     this.args = commandData.args;
+    this.response = commandData.response;
+
+    this.editable = false;
 
     this.texts = undefined;
 
@@ -34,9 +35,6 @@ export default class Command {
         .then(member => this.member = member)
         .catch(console.error);
     }
-
-    /** @type {Discord.Message|undefined} */
-    this.response = undefined;
   }
 
   async exec() {

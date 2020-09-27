@@ -4,8 +4,19 @@ import { CONST } from '../const.js';
 import { locales, resolveVars } from '../locales.js';
 import Command from './Command.js';
 
-import CommandData from './CommandData.js';
 import CommandError from './CommandError.js';
+
+/**
+ * @typedef CommandData
+ * @property {Discord.Client} bot - This bot client.
+ * @property {string} lang - Language setting.
+ * @property {Discord.Message} message - Command message.
+ * @property {string} prefix - Command prefix.
+ * @property {boolean|undefined} exclusive - Is it exclusive.
+ * @property {string|undefined} name - Command name.
+ * @property {string[]} args - Command arguments.
+ * @property {Discord.Message|undefined} response - Command response.
+ */
 
 export default class CommandManager {
   /**
@@ -18,54 +29,23 @@ export default class CommandManager {
     });
 
     bot.on('guildMemberUpdate', (_, member) => {
-      if (member === member.guild.me)
-        this.updateNick(member.guild);
+      if (member === member.guild.me) this.updateNick(member.guild);
     });
 
-    bot.on('message', message => {
-      if (message.author.bot) {
-        message.channel.messages.cache.delete(message.id);
-        return;
-      }
+    bot.on('message', message => this.processingMessage(message));
 
-      const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
-      if (matchMention) {
-        this.sendHelp(message);
-        return;
-      }
+    bot.on('messageReactionAdd',
+      (reaction, user) => this.cancelReaction(reaction, user));
 
-      const commandData = this.parse(message);
-      if (!commandData) {
-        message.channel.messages.cache.delete(message.id);
-        return;
-      }
+    bot.on('messageUpdate', (_, message) => this.editCommnad(message));
 
-      new CommandManager(commandData);
-    });
-
-    bot.on('messageReactionAdd', async (reaction, user) => {
-      if (reaction.emoji.name !== '↩️')
-        return;
-
-      const message = await reaction.message.fetch();
-
-      if (user.id !== message.author.id) {
-        message.channel.messages.cache.delete(message.id);
-        return;
-      }
-
-      const queue = this.queues[message.id];
-      if (!queue)
-        return;
-
-      queue.cancel();
-    });
-
-    for (const events of this.commandEvents)
-      events(bot);
+    for (const events of this.commandEvents) events(bot);
   }
 
+  /** @type {Object.<string, string>} */
   static guildPrefixes = {};
+
+  /** @type {Object.<string, string>} */
   static guildLocales = {};
 
   /**
@@ -100,6 +80,63 @@ export default class CommandManager {
   }
 
   /**
+   * Processing a message.
+   * @param {Discord.Message} message 
+   */
+  static processingMessage(message) {
+    if (message.author.bot) {
+      message.channel.messages.cache.delete(message.id);
+      return;
+    }
+
+    const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
+
+    if (matchMention) {
+      this.sendHelp(message);
+      return;
+    }
+
+    const commandData = this.parse(message);
+
+    if (!commandData) {
+      message.channel.messages.cache.delete(message.id);
+      return;
+    }
+
+    new CommandManager(commandData);
+  }
+
+  /**
+   * Processing a cancel reaction.
+   * @param {Discord.MessageReaction} reaction 
+   * @param {Discord.User} user 
+   */
+  static cancelReaction(reaction, user) {
+    if (reaction.emoji.name !== '↩️') return;
+
+    reaction.message.fetch()
+      .then(message => {
+        if (user.id !== message.author.id) {
+          message.channel.messages.cache.delete(message.id);
+          return;
+        }
+
+        const queue = this.queues[message.id];
+
+        queue?.cancel();
+      })
+      .catch(console.error);
+  }
+
+  /**
+   * Edit command message.
+   * @param {Discord.Message} message 
+   */
+  static editCommnad(message) {
+
+  }
+
+  /**
    * Send a help message.
    * @param {Discord.Message} message
    */
@@ -107,12 +144,19 @@ export default class CommandManager {
     const lang = this.getGuildLanguage(message.guild);
     const prefix = this.getGuildPrefix(message.guild);
 
-    new CommandManager(new CommandData(message.client, lang, message, prefix));
+    new CommandManager({
+      bot: message.client,
+      lang: lang,
+      message: message,
+      prefix: prefix,
+      args: []
+    });
   }
 
   /**
    * Parse the content of the message.
-   * @param {Discord.Message} message
+   * @param {Discord.Message} message - The message to be parsed.
+   * @returns {CommandData}
    */
   static parse(message) {
     const prefix = this.getGuildPrefix(message.guild);
@@ -122,19 +166,25 @@ export default class CommandManager {
     const commandRegex = new RegExp(`^(ex)?${escapedPrefix}`);
     const match = content.match(commandRegex);
 
-    if (!match)
-      return;
+    if (!match) return;
 
     const exclusive = !!match[1];
     const argsString = content.slice(match[0].length);
     const args = this.parseString(argsString);
 
-    if (!this.commands[args[0]])
-      return;
+    if (!this.commands[args[0]]) return;
 
     const lang = this.getGuildLanguage(message.guild);
 
-    return new CommandData(message.client, lang, message, prefix, exclusive, args.shift(), args);
+    return {
+      bot: message.client,
+      lang: lang,
+      message: message,
+      prefix: prefix,
+      exclusive: exclusive,
+      name: args[0],
+      args: args.slice(1)
+    };
   }
 
   static QUOTE_PAIRS = { '“': '”', '„': '”', "‘": "’", "‚": "’" };
@@ -278,10 +328,7 @@ export default class CommandManager {
       embed: {
         color: CONST.COLOR_ERROR,
         title: `⚠️ ${error.title}`,
-        description: error.description,
-        footer: {
-          text: error.exception.toString()
-        }
+        description: error.description
       }
     });
   }

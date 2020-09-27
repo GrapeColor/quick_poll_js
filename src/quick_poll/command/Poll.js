@@ -6,8 +6,8 @@ import twemojiRegex from 'twemoji-parser/dist/lib/regex.js';
 import { CONST } from '../const.js';
 import { locales } from '../locales.js';
 
+import { CommandData } from './CommandManager.js';
 import Command from './Command.js';
-import CommandData from './CommandData.js'
 
 export default class Poll extends Command {
   /**
@@ -81,9 +81,9 @@ export default class Poll extends Command {
    * @type {Object.<string, function(CommandData): Poll>}
    */
   static commands = {
-    poll: commandData => new Poll(commandData),
+    poll:     commandData => new Poll(commandData),
     freepoll: commandData => new Poll(commandData),
-    numpoll: commandData => new Poll(commandData)
+    numpoll:  commandData => new Poll(commandData)
   };
 
   static EMOJI_REGEX = new RegExp(
@@ -114,6 +114,8 @@ export default class Poll extends Command {
   constructor(commandData) {
     super(commandData);
 
+    this.editable = true;
+
     this.texts = locales[this.lang].poll;
 
     if (this.channel.type !== 'dm') {
@@ -121,14 +123,13 @@ export default class Poll extends Command {
       this.allowExternalEmojis = this.permissions.has('USE_EXTERNAL_EMOJIS');
     }
 
-    this.response = undefined;
     this.query = undefined;
     this.options = undefined;
     this.attachment = undefined;
   }
 
   async commandExec() {
-    this.response = await this.sendWaiter();
+    if (!this.response) this.response = await this.sendWaiter();
 
     if (this.exclusive) {
       if (!this.guild) throw 'unavailableExclusive';
@@ -215,23 +216,23 @@ export default class Poll extends Command {
 
     const matchGuildEmoji = arg.match(Poll.GUILD_EMOJI_REGEX);
 
-    if (matchGuildEmoji) {
-      const guildEmojiID = matchGuildEmoji[1];
-      const guildEmoji = this.bot.emojis.cache.get(guildEmojiID);
+    if (!matchGuildEmoji) return;
 
-      if (!guildEmoji) throw 'unknownEmoji';
+    const guildEmojiID = matchGuildEmoji[1];
+    const guildEmoji = this.bot.emojis.cache.get(guildEmojiID);
 
-      if (this.guild
-        && this.guild.id !== guildEmoji.guild.id
-        && !this.allowExternalEmojis) throw 'denyExternalEmojis';
+    if (!guildEmoji) throw 'unknownEmoji';
 
-      const roles = guildEmoji.roles.cache;
-      const botRoles = guildEmoji.guild.me.roles.cache;
+    if (this.guild
+      && this.guild.id !== guildEmoji.guild.id
+      && !this.allowExternalEmojis) throw 'denyExternalEmojis';
 
-      if (roles.size && !roles.intersect(botRoles).size) throw 'unavailableEmoji';
+    const roles = guildEmoji.roles.cache;
+    const botRoles = guildEmoji.guild.me.roles.cache;
 
-      return guildEmojiID;
-    }
+    if (roles.size && !roles.intersect(botRoles).size) throw 'unavailableEmoji';
+
+    return guildEmojiID;
   }
 
   /** @returns {Option[]} */
