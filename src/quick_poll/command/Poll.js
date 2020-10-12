@@ -114,7 +114,7 @@ export default class Poll extends Command {
   constructor(commandData) {
     super(commandData);
 
-    this.texts = locales[this.lang].poll;
+    this.infomations = locales[this.lang].poll;
 
     if (this.channel.type !== 'dm') {
       this.allowManageMessages = this.permissions.has('MANAGE_MESSAGES');
@@ -146,7 +146,7 @@ export default class Poll extends Command {
   sendWaiter() {
     const embed = new Discord.MessageEmbed({ color: CONST.COLOR_WAIT });
 
-    embed.title = `⌛ ${this.texts.wait}`;
+    embed.title = `⌛ ${this.infomations.wait}`;
 
     return this.channel.send(embed);
   }
@@ -263,7 +263,7 @@ export default class Poll extends Command {
     embed.description = this.optionsList();
     embed.setImage(this.attachment ? this.attachment.name : undefined);
     embed.setFooter(this.exclusive
-      ? this.texts.footer.ex[this.name] : this.texts.footer[this.name]);
+      ? this.infomations.footer.ex[this.name] : this.infomations.footer[this.name]);
 
     return this.response.edit(embed);
   }

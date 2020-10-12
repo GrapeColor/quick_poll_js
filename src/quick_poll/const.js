@@ -1,31 +1,5 @@
 import { Permissions } from 'discord.js';
 
-/**
- * Constant structure.
- * @typedef {Object} Const
- * @property {string} MANUAL_URL
- * @property {string} SUPPORT_URL
- * @property {string} DONATION_URL
- * @property {Permissions} REQUIRED_PERMISSIONS
- * @property {string} DEFAULT_PREFIX
- * @property {string} DEFAULT_LOCALE
- * @property {number} QUEUE_TIMEOUT
- * @property {number} COLOR_POLL
- * @property {number} COLOR_EXPOLL
- * @property {number} COLOR_RESULT
- * @property {number} COLOR_WAIT
- * @property {number} COLOR_ERROR
- * @property {number} COLOR_HELP
- * @property {number} MAX_OPTIONS
- * @property {number} MAX_NUMBER
- * @property {number} QUERY_MAX
- * @property {number} OPTION_MAX
- */
-
-/**
- * Constants common within the app.
- * @type {Const}
- */
 export const CONST = {
   MANUAL_URL:   process.env['MANUAL_URL'],
   SUPPORT_URL:  process.env['SUPPORT_URL'],
@@ -35,6 +9,9 @@ export const CONST = {
 
   DEFAULT_PREFIX: '/',
   DEFAULT_LOCALE: 'ja',
+
+  RESET_RATE_LIMIT: 10,
+  RATE_LIMIT_BOT_COMMAND: 5,
 
   QUEUE_TIMEOUT: 3 * 60 * 1000,
 

@@ -16,7 +16,7 @@ export default class Command {
     this.args = commandData.args;
     this.response = commandData.response;
 
-    this.texts = undefined;
+    this.infomations = undefined;
 
     this.user = this.message.author;
     this.channel = this.message.channel;

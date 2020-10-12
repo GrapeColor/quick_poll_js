@@ -40,6 +40,10 @@ export default class CommandManager {
     bot.on('messageUpdate', (_, message) => this.editCommand(message));
 
     for (const events of this.commandEvents) events(bot);
+
+    this.botMentionRegex = new RegExp(`^<@!?${bot.user.id}>$`);
+
+    bot.setInterval(() => this.resetCommandRate(), CONST.RESET_RATE_LIMIT);
   }
 
   /** @type {Object.<string, string>} */
@@ -89,21 +93,37 @@ export default class CommandManager {
       return;
     }
 
-    const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
-
-    if (matchMention) {
+    if (this.botMentionRegex.test(message.content)) {
       this.callHelp(message);
       return;
     }
 
     const commandData = this.parse(message);
 
-    if (!commandData) {
-      message.channel.messages.cache.delete(message.id);
-      return;
-    }
+    if (commandData) new CommandManager(commandData);
+    else message.channel.messages.cache.delete(message.id);
+  }
 
-    new CommandManager(commandData);
+  /** @type {Object.<string, number>} */
+  static commandCounts = {};
+
+  static resetCommandRate() { this.commandCounts = {}; }
+
+  /**
+   * Check limit of command by bot.
+   * @param {Discord.User} user 
+   */
+  static overCommandRate(user) {
+    if (!user.bot) return false;
+
+    const count = this.commandCounts[user.id];
+
+    if (count) {
+      if (count > CONST.RATE_LIMIT_BOT_COMMAND) return true;
+
+      this.commandCounts[user.id]++;
+    }
+    else this.commandCounts[user.id] = 1;
   }
 
   /**
@@ -133,11 +153,11 @@ export default class CommandManager {
    * @param {Discord.Message} message 
    */
   static editCommand(message) {
-    if (!message.editedAt) return;
-
     const responser = this.resoponser[message.id];
 
+    if (!message.editedAt || !responser) return;
 
+    
   }
 
   /**
