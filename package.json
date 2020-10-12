@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/main.js",
-    "dev": "node -r dotenv/config src/main.js 0 1",
+    "dev": "node -r dotenv/config src/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

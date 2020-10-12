@@ -37,7 +37,7 @@ export default class CommandManager {
     bot.on('messageReactionAdd',
       (reaction, user) => this.cancelReaction(reaction, user));
 
-    bot.on('messageUpdate', (_, message) => this.editCommnad(message));
+    bot.on('messageUpdate', (_, message) => this.editCommand(message));
 
     for (const events of this.commandEvents) events(bot);
   }
@@ -92,7 +92,7 @@ export default class CommandManager {
     const matchMention = message.content.match(new RegExp(`^<@!?${bot.user.id}>$`));
 
     if (matchMention) {
-      this.sendHelp(message);
+      this.callHelp(message);
       return;
     }
 
@@ -121,9 +121,9 @@ export default class CommandManager {
           return;
         }
 
-        const queue = this.queues[message.id];
+        const responser = this.responsers[message.id];
 
-        queue?.cancel();
+        responser?.cancel();
       })
       .catch(console.error);
   }
@@ -132,23 +132,24 @@ export default class CommandManager {
    * Edit command message.
    * @param {Discord.Message} message 
    */
-  static editCommnad(message) {
+  static editCommand(message) {
+    if (!message.editedAt) return;
+
+    const responser = this.resoponser[message.id];
+
 
   }
 
   /**
-   * Send a help message.
+   * Call a help message.
    * @param {Discord.Message} message
    */
-  static sendHelp(message) {
-    const lang = this.getGuildLanguage(message.guild);
-    const prefix = this.getGuildPrefix(message.guild);
-
+  static callHelp(message) {
     new CommandManager({
       bot: message.client,
-      lang: lang,
+      lang: this.getGuildLanguage(message.guild),
       message: message,
-      prefix: prefix,
+      prefix: this.getGuildPrefix(message.guild),
       args: []
     });
   }
@@ -248,8 +249,11 @@ export default class CommandManager {
    */
   static addCommands(commands) { Object.assign(this.commands, commands); }
 
-  /** @type {Object.<string, CommandManager>} */
-  static queues = {};
+  /**
+   * A command that is waiting after responding to a command.
+   * @type {Object.<string, CommandManager>} 
+   */
+  static responsers = {};
 
   /**
    * Issue a command.
@@ -259,55 +263,34 @@ export default class CommandManager {
     this.bot = commandData.bot;
     this.message = commandData.message;
 
-    const responser = commandData.args.length
+    this.afterResponding(
+      commandData.args.length
       ? CommandManager.commands[commandData.name](commandData).exec()
-      : this.callHelp(commandData);
-
-    responser
-      .then(response => {
-        this.response = response;
-
-        this.message.react('↩️')
-          .then(() => {
-            CommandManager.queues[this.message.id] = this;
-
-            this.timeout = setTimeout(() => this.clearQueue(), CONST.QUEUE_TIMEOUT);
-          })
-          .catch(undefined);
-      })
-      .catch(error => {
-        this.sendError(error, commandData)
-          .then(response => this.response = response)
-          .catch(undefined);
-      });
+      : this.sendHelp(commandData)
+    );
   }
 
   /**
-   * Call help message.
-   * @param {CommandData} commandData 
+   * Processing after responding.
+   * @param {Promise<Discord.Message>} response
    */
-  async callHelp(commandData) {
-    const channel = commandData.message.channel;
-    const help = locales[commandData.lang].help;
+  afterResponding(response) {
+    response
+      .then(response => {
+        this.response = response;
+        this.addResponser();
+      })
+      .catch(error => this.sendError(error, commandData));
+  }
 
-    const embed = new Discord.MessageEmbed({
-      color: CONST.COLOR_HELP,
-      title: help.title,
-      url: help.url,
-      description: help.description
-    });
+  addResponser() {
+    this.message.react('↩️')
+      .then(() => {
+        CommandManager.responsers[this.message.id] = this;
 
-    const inviteUrl
-      = await commandData.bot.generateInvite(CONST.REQUIRED_PERMISSIONS);
-
-    for (const field of help.fields) {
-      embed.addField(field.name, resolveVars(field.value, {
-        PREFIX: commandData.prefix,
-        INVITE_URL: inviteUrl
-      }));
-    }
-
-    return channel.send({ embed: embed });
+        this.timeout = setTimeout(() => this.clearQueue(), CONST.QUEUE_TIMEOUT);
+      })
+      .catch(undefined);
   }
 
   /**
@@ -324,27 +307,54 @@ export default class CommandManager {
       return;
     }
 
-    return commandData.message.channel.send({
-      embed: {
-        color: CONST.COLOR_ERROR,
-        title: `⚠️ ${error.title}`,
-        description: error.description
-      }
-    });
+    const embed = new Discord.MessageEmbed({ color: CONST.COLOR_ERROR });
+
+    embed.title = `⚠️ ${error.title}`;
+    embed.description = error.description;
+
+    commandData.message.channel.send(embed)
+      .then(response => this.response = response)
+      .catch(undefined);
+  }
+
+  /**
+   * Send help message.
+   * @param {CommandData} commandData 
+   */
+  async sendHelp(commandData) {
+    const channel = commandData.message.channel;
+    const help = locales[commandData.lang].help;
+    const embed = new Discord.MessageEmbed({ color: CONST.COLOR_HELP });
+
+    embed.title = help.title;
+    embed.url = help.url;
+    embed.description = help.description;
+
+    const inviteUrl
+      = await commandData.bot.generateInvite(CONST.REQUIRED_PERMISSIONS);
+
+    for (const field of help.fields) {
+      embed.addField(field.name, resolveVars(field.value, {
+        PREFIX: commandData.prefix,
+        INVITE_URL: inviteUrl
+      }));
+    }
+
+    return channel.send(embed);
   }
 
   cancel() {
     clearTimeout(this.timeout);
-    this.clearQueue();
+    this.removeResponser();
 
     this.response.delete()
       .catch();
   }
 
-  clearQueue() {
+  removeResponser() {
     this.message.reactions.cache.get('↩️').users.remove(this.bot.user)
       .catch();
 
-    delete CommandManager.queues[this.message.id];
+    delete CommandManager.responsers[this.message.id];
   }
 }

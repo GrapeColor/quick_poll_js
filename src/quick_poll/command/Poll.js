@@ -114,8 +114,6 @@ export default class Poll extends Command {
   constructor(commandData) {
     super(commandData);
 
-    this.editable = true;
-
     this.texts = locales[this.lang].poll;
 
     if (this.channel.type !== 'dm') {
@@ -129,7 +127,8 @@ export default class Poll extends Command {
   }
 
   async commandExec() {
-    if (!this.response) this.response = await this.sendWaiter();
+    if (this.response) await this.response.reactions.removeAll();
+    else this.response = await this.sendWaiter();
 
     if (this.exclusive) {
       if (!this.guild) throw 'unavailableExclusive';

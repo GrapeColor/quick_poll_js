@@ -16,8 +16,6 @@ export default class Command {
     this.args = commandData.args;
     this.response = commandData.response;
 
-    this.editable = false;
-
     this.texts = undefined;
 
     this.user = this.message.author;
