@@ -19,7 +19,7 @@
     "discord.js": "^12.3.1",
     "dotenv": "^8.2.0",
     "js-yaml": "^3.14.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "twemoji-parser": "^13.0.0"
   },
   "devDependencies": {
